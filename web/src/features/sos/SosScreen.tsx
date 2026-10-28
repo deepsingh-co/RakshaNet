@@ -104,47 +104,23 @@ export function SosScreen() {
   }
 
   return (
-    <div className="flex flex-col items-center gap-5 pt-2">
+    <div className="flex flex-col items-center gap-6 pt-2">
       <ProtectionStatus />
 
-      {/* Emergency type */}
-      <fieldset className="w-full">
-        <legend className="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-faint">
-          What kind of help?
-        </legend>
-        <div className="flex flex-wrap gap-2">
-          {EMERGENCY_TYPES.map((t) => (
-            <button
-              key={t.value}
-              type="button"
-              onClick={() => setType(t.value)}
-              aria-pressed={type === t.value}
-              className={`btn rounded-full px-3.5 py-1.5 text-sm ${
-                type === t.value
-                  ? 'bg-brand text-white'
-                  : 'border border-line-strong bg-white text-ink-soft hover:bg-page'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
-      </fieldset>
+      {/* 1. Clear instruction first — read, then act */}
+      <div className="w-full text-center">
+        <p className="text-lg font-bold leading-snug text-ink">In danger?</p>
+        <p className="mt-1 text-sm text-ink-soft">
+          Press and hold the red button for {HOLD_MS / 1000} seconds.
+        </p>
+      </div>
 
-      <input
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-        placeholder="Optional note (e.g. description of threat)"
-        maxLength={200}
-        className="input"
-      />
-
-      {/* Hold-to-trigger */}
-      <div className="relative mt-2">
+      {/* 2. The one action that matters */}
+      <div className="relative">
         {holding && <span className="pulse-ring absolute inset-0 rounded-full" aria-hidden />}
         <button
           type="button"
-          className={`sos-button relative flex size-52 select-none flex-col items-center justify-center rounded-full border-[6px] border-white shadow-[0_10px_35px_rgb(220_38_38/0.4)] transition-all active:scale-95 ${
+          className={`sos-button relative flex size-56 select-none flex-col items-center justify-center rounded-full border-[7px] border-white shadow-[0_12px_40px_rgb(220_38_38/0.45)] transition-all active:scale-95 ${
             holding ? 'bg-brand-deep' : 'bg-brand'
           }`}
           onPointerDown={startHold}
@@ -156,17 +132,70 @@ export function SosScreen() {
           disabled={firing}
           aria-label={`Hold for ${HOLD_MS / 1000} seconds to trigger SOS`}
         >
-          <span className="text-5xl font-black tracking-widest text-white">SOS</span>
-          <span className="mt-1 text-xs font-semibold text-white/90">
-            {firing ? 'Starting…' : `Hold ${HOLD_MS / 1000}s to alert`}
+          <span className="text-6xl font-black tracking-widest text-white">SOS</span>
+          <span className="mt-1.5 text-xs font-semibold text-white/90">
+            {firing ? 'Starting…' : holding ? 'Keep holding…' : 'Hold to alert'}
           </span>
         </button>
       </div>
 
-      <p className="max-w-xs text-center text-xs leading-relaxed text-ink-faint">
-        Works offline. Triggering saves the alert locally, sounds an alarm, then prepares
-        WhatsApp/SMS messages for you to send.
-      </p>
+      {/* 3. What will happen — in plain words */}
+      <ul className="w-full space-y-2 rounded-2xl bg-card p-4 ring-1 ring-line">
+        {[
+          ['🔔', 'A loud alarm starts'],
+          ['💾', 'Your alert is saved — works without internet'],
+          ['📤', 'WhatsApp & SMS messages are prepared for you to send'],
+        ].map(([emoji, text]) => (
+          <li key={text} className="flex items-start gap-2.5 text-[13px] leading-snug text-ink-soft">
+            <span aria-hidden>{emoji}</span>
+            <span>{text}</span>
+          </li>
+        ))}
+      </ul>
+
+      {/* 4. Optional details — secondary, tucked below */}
+      <details className="w-full rounded-2xl bg-card ring-1 ring-line open:rounded-b-2xl">
+        <summary className="cursor-pointer select-none px-4 py-3 text-sm font-semibold text-ink-soft">
+          Add details (optional)
+        </summary>
+        <div className="space-y-3 border-t border-line px-4 pb-4 pt-3">
+          <fieldset>
+            <legend className="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-faint">
+              What kind of help?
+            </legend>
+            <div className="flex flex-wrap gap-2">
+              {EMERGENCY_TYPES.map((t) => (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() => setType(t.value)}
+                  aria-pressed={type === t.value}
+                  className={`btn rounded-full px-3.5 py-1.5 text-sm ${
+                    type === t.value
+                      ? 'bg-brand text-white'
+                      : 'border border-line-strong bg-white text-ink-soft hover:bg-page'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </fieldset>
+
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-faint">
+              Note
+            </span>
+            <input
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="e.g. description of threat"
+              maxLength={200}
+              className="input"
+            />
+          </label>
+        </div>
+      </details>
     </div>
   );
 }
