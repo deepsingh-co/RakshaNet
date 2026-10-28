@@ -17,37 +17,27 @@ export function SosScreen() {
   const [type, setType] = useState<EmergencyType>('PERSONAL_SAFETY');
   const [note, setNote] = useState('');
   const [holding, setHolding] = useState(false);
-  const [progress, setProgress] = useState(0);
   const [firing, setFiring] = useState(false);
 
   const holdStart = useRef(0);
-  const raf = useRef(0);
   const consented = contacts.filter((c) => c.consent === 'CONSENTED');
   const activeEvent = events.find((e) => e.status === 'ACTIVE');
 
   const stopHold = () => {
     setHolding(false);
-    setProgress(0);
-    cancelAnimationFrame(raf.current);
   };
 
-  const tick = () => {
-    const elapsed = Date.now() - holdStart.current;
-    const pct = Math.min(1, elapsed / HOLD_MS);
-    setProgress(pct);
-    if (pct >= 1) {
+  const checkHold = () => {
+    if (Date.now() - holdStart.current >= HOLD_MS) {
       stopHold();
       void fire();
-      return;
     }
-    raf.current = requestAnimationFrame(tick);
   };
 
   const startHold = () => {
     if (firing || activeEvent) return;
     holdStart.current = Date.now();
     setHolding(true);
-    raf.current = requestAnimationFrame(tick);
   };
 
   const fire = async () => {
@@ -61,13 +51,20 @@ export function SosScreen() {
     }
   };
 
-  useEffect(() => () => cancelAnimationFrame(raf.current), []);
+  // Poll while held (simpler + more reliable than rAF progress math).
+  useEffect(() => {
+    if (!holding) return;
+    const t = setInterval(checkHold, 80);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [holding]);
 
   // Keyboard accessibility: hold Space/Enter on the focused button.
   const onKeyDown = (e: React.KeyboardEvent) => {
     if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) {
       e.preventDefault();
       startHold();
+      setTimeout(checkHold, HOLD_MS);
     }
   };
   const onKeyUp = (e: React.KeyboardEvent) => {
@@ -78,10 +75,16 @@ export function SosScreen() {
     const event = activeEvent ?? events[0];
     return (
       <div className="space-y-4">
-        <div className="rounded-xl border border-red-800 bg-red-950/50 p-4">
-          <p className="text-sm font-semibold uppercase tracking-wide text-red-300">SOS active</p>
-          <p className="mt-1 text-sm text-red-200">
-            The alarm is sounding and your alert is being prepared for each trusted contact.
+        <div className="card border-red-200 bg-brand-soft p-4">
+          <p className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-brand">
+            <span className="relative flex size-2.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-60" />
+              <span className="relative inline-flex size-2.5 rounded-full bg-brand" />
+            </span>
+            SOS active
+          </p>
+          <p className="mt-1.5 text-sm text-brand/90">
+            Alarm is on and your alert is being prepared for each trusted contact.
           </p>
         </div>
 
@@ -94,10 +97,7 @@ export function SosScreen() {
 
         <div className="flex gap-3">
           <StopAlarmButton eventId={event?.id} />
-          <Link
-            to="/contacts"
-            className="flex-1 rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-center text-sm font-semibold text-slate-200 hover:bg-slate-800"
-          >
+          <Link to="/contacts" className="btn btn-quiet flex-1 px-4 py-3 text-center text-sm">
             Manage contacts
           </Link>
         </div>
@@ -106,20 +106,25 @@ export function SosScreen() {
   }
 
   return (
-    <div className="flex flex-col items-center gap-5 pt-4">
+    <div className="flex flex-col items-center gap-5 pt-2">
       {consented.length === 0 && (
-        <div className="w-full rounded-xl border border-amber-800 bg-amber-950/40 p-3 text-sm text-amber-200">
-          No trusted contacts yet. SOS still records the event and sounds the alarm —{' '}
-          <Link to="/contacts" className="font-semibold underline">
-            add a contact
-          </Link>{' '}
-          so alerts can be sent.
+        <div className="card w-full border-amber-200 bg-warn-soft p-3.5 text-sm text-warn">
+          <p className="font-semibold">No trusted contacts yet</p>
+          <p className="mt-0.5 text-warn/85">
+            SOS still records the event and sounds the alarm —{' '}
+            <Link to="/contacts" className="font-semibold underline">
+              add a contact
+            </Link>{' '}
+            so alerts can be sent.
+          </p>
         </div>
       )}
 
       {/* Emergency type */}
       <fieldset className="w-full">
-        <legend className="mb-2 text-sm font-medium text-slate-400">Emergency type</legend>
+        <legend className="mb-2 text-xs font-semibold uppercase tracking-wider text-ink-faint">
+          What kind of help?
+        </legend>
         <div className="flex flex-wrap gap-2">
           {EMERGENCY_TYPES.map((t) => (
             <button
@@ -127,10 +132,10 @@ export function SosScreen() {
               type="button"
               onClick={() => setType(t.value)}
               aria-pressed={type === t.value}
-              className={`rounded-full px-3 py-1.5 text-sm ${
+              className={`btn rounded-full px-3.5 py-1.5 text-sm ${
                 type === t.value
-                  ? 'bg-red-700 font-semibold text-white'
-                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  ? 'bg-brand text-white'
+                  : 'border border-line-strong bg-white text-ink-soft hover:bg-page'
               }`}
             >
               {t.label}
@@ -144,7 +149,7 @@ export function SosScreen() {
         onChange={(e) => setNote(e.target.value)}
         placeholder="Optional note (e.g. description of threat)"
         maxLength={200}
-        className="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-sm placeholder:text-slate-500 focus:border-red-700 focus:outline-none"
+        className="input"
       />
 
       {/* Hold-to-trigger */}
@@ -152,9 +157,9 @@ export function SosScreen() {
         {holding && <span className="pulse-ring absolute inset-0 rounded-full" aria-hidden />}
         <button
           type="button"
-          className={`sos-button relative flex size-52 select-none flex-col items-center justify-center rounded-full border-4 ${
-            holding ? 'border-red-400 bg-red-700' : 'border-red-800 bg-red-600'
-          } shadow-2xl transition-transform active:scale-95`}
+          className={`sos-button relative flex size-52 select-none flex-col items-center justify-center rounded-full border-[6px] border-white shadow-[0_10px_35px_rgb(220_38_38/0.4)] transition-all active:scale-95 ${
+            holding ? 'bg-brand-deep' : 'bg-brand'
+          }`}
           onPointerDown={startHold}
           onPointerUp={stopHold}
           onPointerLeave={stopHold}
@@ -165,25 +170,15 @@ export function SosScreen() {
           aria-label={`Hold for ${HOLD_MS / 1000} seconds to trigger SOS`}
         >
           <span className="text-5xl font-black tracking-widest text-white">SOS</span>
-          <span className="mt-1 text-xs font-medium text-red-100">
-            {firing ? 'Triggering…' : `Hold ${HOLD_MS / 1000}s to alert`}
+          <span className="mt-1 text-xs font-semibold text-white/90">
+            {firing ? 'Starting…' : `Hold ${HOLD_MS / 1000}s to alert`}
           </span>
-          {holding && (
-            <span
-              className="absolute inset-0 rounded-full border-4 border-white/70"
-              style={{
-                clipPath: `polygon(50% 50%, 50% 0, ${50 + 50 * Math.sin((progress * 2 * Math.PI) ) }% ${50 - 50 * Math.cos(progress * 2 * Math.PI)}%, 50% 50%)`,
-                opacity: 0.6,
-              }}
-              aria-hidden
-            />
-          )}
         </button>
       </div>
 
-      <p className="max-w-xs text-center text-xs text-slate-500">
-        Works offline. Triggering saves the alert locally, sounds an alarm, then hands messages to
-        WhatsApp/SMS for you to send.
+      <p className="max-w-xs text-center text-xs leading-relaxed text-ink-faint">
+        Works offline. Triggering saves the alert locally, sounds an alarm, then prepares
+        WhatsApp/SMS messages for you to send.
       </p>
     </div>
   );

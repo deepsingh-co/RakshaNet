@@ -41,46 +41,43 @@ export function SettingsScreen() {
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-xl font-bold">Settings</h1>
+    <div className="space-y-5">
+      <h1 className="text-xl font-bold text-ink">Settings</h1>
 
-      <section className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-        <h2 className="text-sm font-semibold text-slate-300">Your profile</h2>
-        <p className="mb-3 mt-1 text-xs text-slate-500">
+      <section className="card p-4">
+        <h2 className="text-sm font-bold text-ink">Your profile</h2>
+        <p className="mb-3 mt-1 text-xs leading-relaxed text-ink-faint">
           Used to personalize emergency messages. Stored only on this device.
         </p>
         <form onSubmit={(e) => void submit(e)} className="space-y-3">
           <label className="block">
-            <span className="mb-1 block text-xs uppercase tracking-wide text-slate-500">Name</span>
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-faint">Name</span>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Your name"
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm focus:border-red-700 focus:outline-none"
+              className="input"
             />
           </label>
           <label className="block">
-            <span className="mb-1 block text-xs uppercase tracking-wide text-slate-500">Phone</span>
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ink-faint">Phone</span>
             <input
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               placeholder="+91…"
               inputMode="tel"
-              className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 font-mono text-sm focus:border-red-700 focus:outline-none"
+              className="input font-mono"
             />
           </label>
-          <button
-            type="submit"
-            className="rounded-lg bg-red-700 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600"
-          >
+          <button type="submit" className="btn btn-primary px-4 py-2 text-sm">
             {saved ? 'Saved ✓' : 'Save'}
           </button>
         </form>
       </section>
 
-      <section className="rounded-xl border border-slate-800 bg-slate-900 p-4">
-        <h2 className="text-sm font-semibold text-slate-300">Data on this device</h2>
-        <dl className="mt-2 grid grid-cols-3 gap-2 text-center">
+      <section className="card p-4">
+        <h2 className="text-sm font-bold text-ink">Data on this device</h2>
+        <dl className="mt-3 grid grid-cols-3 gap-2 text-center">
           <Stat label="Events" value={stats.events} />
           <Stat label="Contacts" value={stats.contacts} />
           <Stat label="Deliveries" value={stats.deliveries} />
@@ -88,37 +85,44 @@ export function SettingsScreen() {
         <button
           type="button"
           onClick={() => void wipe()}
-          className="mt-4 w-full rounded-lg border border-red-900 py-2.5 text-sm font-semibold text-red-400 hover:bg-red-950"
+          className="btn mt-4 w-full border border-red-300 bg-white py-2.5 text-sm text-brand hover:bg-brand-soft"
         >
           Delete all data
         </button>
       </section>
 
-      <section className="rounded-xl border border-slate-800 bg-slate-900 p-4 text-sm text-slate-400">
-        <h2 className="mb-2 text-sm font-semibold text-slate-300">How delivery status works</h2>
-        <ul className="space-y-1.5 text-xs leading-relaxed">
-          <li><strong className="text-slate-300">Queued</strong> — saved on your device, not yet handed to any app.</li>
-          <li><strong className="text-slate-300">Prepared</strong> — the messaging app opened with your message. <em>It is not sent until you press send.</em></li>
-          <li><strong className="text-slate-300">Sent</strong> — you confirmed the message went out.</li>
-          <li><strong className="text-slate-300">Acknowledged</strong> — the recipient confirmed they received it.</li>
+      <section className="card p-4">
+        <h2 className="text-sm font-bold text-ink">How delivery status works</h2>
+        <ul className="mt-2.5 space-y-2 text-xs leading-relaxed text-ink-soft">
+          <li>
+            <span className="font-semibold text-ink">Queued</span> — saved on your device, not yet handed to any app.
+          </li>
+          <li>
+            <span className="font-semibold text-warn">Prepared</span> — the messaging app opened with your message.{' '}
+            <em className="text-warn">It is not sent until you press send.</em>
+          </li>
+          <li>
+            <span className="font-semibold text-safe">Sent</span> — you confirmed the message went out.
+          </li>
+          <li>
+            <span className="font-semibold text-info">Acknowledged</span> — the recipient confirmed they received it.
+          </li>
         </ul>
-        <p className="mt-3 text-xs text-slate-500">
+        <p className="mt-3 border-t border-line pt-3 text-xs text-ink-faint">
           RakshaNet never claims a message was delivered just because it opened WhatsApp.
         </p>
       </section>
 
-      <p className="pb-4 text-center text-xs text-slate-600">
-        RakshaNet web v0.1.0 · offline-first safety PWA
-      </p>
+      <p className="pb-4 text-center text-xs text-ink-faint">RakshaNet web v0.1.0 · offline-first safety PWA</p>
     </div>
   );
 }
 
 function Stat({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-lg bg-slate-950 py-2">
-      <dt className="text-[11px] uppercase tracking-wide text-slate-500">{label}</dt>
-      <dd className="text-lg font-bold text-slate-200">{value}</dd>
+    <div className="rounded-xl bg-page py-2.5 ring-1 ring-line">
+      <dt className="text-[11px] font-medium uppercase tracking-wide text-ink-faint">{label}</dt>
+      <dd className="text-lg font-bold text-ink">{value}</dd>
     </div>
   );
 }

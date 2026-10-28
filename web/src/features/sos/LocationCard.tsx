@@ -15,13 +15,13 @@ export function LocationCard({ event }: { event: EmergencyEvent }) {
   };
 
   return (
-    <section className="rounded-xl border border-slate-800 bg-slate-900 p-4">
+    <section className="card p-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-300">Location</h2>
+        <h2 className="text-sm font-semibold text-ink">Location</h2>
         <button
           type="button"
           onClick={() => void refresh()}
-          className="text-xs font-medium text-sky-400 hover:text-sky-300"
+          className="text-xs font-semibold text-info hover:underline"
         >
           Refresh fix
         </button>
@@ -31,18 +31,18 @@ export function LocationCard({ event }: { event: EmergencyEvent }) {
           const { fresh: isFresh, ageMs } = locationFreshness(fix);
           return (
             <div className="mt-2 space-y-1">
-              <p className="font-mono text-sm text-slate-100">
+              <p className="font-mono text-sm font-medium text-ink">
                 {fix.lat.toFixed(5)}, {fix.lng.toFixed(5)}
-                <span className="ml-2 text-slate-400">±{Math.round(fix.accuracyM)}m</span>
+                <span className="ml-2 font-sans text-ink-faint">±{Math.round(fix.accuracyM)}m</span>
               </p>
-              <p className={`text-xs ${isFresh ? 'text-emerald-400' : 'text-amber-400'}`}>
-                {isFresh ? 'Fresh' : 'Stale'} · captured {formatAge(ageMs)} · {fix.source}
+              <p className={`text-xs font-medium ${isFresh ? 'text-safe' : 'text-warn'}`}>
+                {isFresh ? '● Fresh' : '● Stale'} · captured {formatAge(ageMs)} · {fix.source}
               </p>
               <a
                 href={mapsLink(fix)}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-block text-xs font-medium text-sky-400 hover:text-sky-300"
+                className="inline-block text-xs font-semibold text-info hover:underline"
               >
                 Open in maps ↗
               </a>
@@ -50,8 +50,8 @@ export function LocationCard({ event }: { event: EmergencyEvent }) {
           );
         })()
       ) : (
-        <p className="mt-2 text-sm text-slate-400">
-          Location unavailable — the alert is still sent without coordinates.
+        <p className="mt-2 text-sm text-ink-soft">
+          Location unavailable — the alert still goes out without coordinates.
         </p>
       )}
     </section>

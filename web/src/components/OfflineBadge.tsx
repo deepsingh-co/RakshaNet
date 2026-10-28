@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react';
 
-/** Honest connectivity indicator — WhatsApp needs it, SMS does not. */
+/**
+ * Honest connectivity indicator.
+ *  Online (green)  — WhatsApp alerts can be handed off
+ *  Offline (amber) — alerts queue locally; SMS still works with cellular
+ */
 export function OfflineBadge() {
   const [online, setOnline] = useState(navigator.onLine);
 
@@ -18,19 +22,19 @@ export function OfflineBadge() {
   return (
     <span
       className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${
-        online ? 'bg-slate-800 text-slate-300' : 'bg-amber-950 text-amber-300'
+        online ? 'bg-safe-soft text-safe' : 'bg-warn-soft text-warn'
       }`}
       title={
         online
-          ? 'Online — WhatsApp hand-off available'
-          : 'Offline — alerts will queue; SMS still works with cellular service'
+          ? 'Online — WhatsApp alerts can be prepared'
+          : 'Offline — alerts are saved and queued. SMS still works with cellular service.'
       }
     >
       <span
-        className={`size-2 rounded-full ${online ? 'bg-emerald-400' : 'bg-amber-400'}`}
+        className={`size-2 rounded-full ${online ? 'bg-safe' : 'bg-warn'}`}
         aria-hidden
       />
-      {online ? 'Online' : 'Offline'}
+      {online ? 'Online' : 'Offline · SMS works'}
     </span>
   );
 }

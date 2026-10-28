@@ -15,8 +15,8 @@ export default defineConfig({
         short_name: 'RakshaNet',
         description:
           'Trigger SOS, share your location with trusted contacts, and send alerts via WhatsApp and SMS — even without internet.',
-        theme_color: '#0f172a',
-        background_color: '#0f172a',
+        theme_color: '#ffffff',
+        background_color: '#f5f7fa',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',

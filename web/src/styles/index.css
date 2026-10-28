@@ -1,10 +1,31 @@
 @import 'tailwindcss';
 
+/*
+  RakshaNet design language — "calm and safe".
+  Color meaning (keep it consistent everywhere):
+    safe (green)  = protected / ready / confirmed
+    danger (red)  = SOS only — never decorative
+    warn (amber)  = needs your attention (prepared, stale, offline)
+    info (blue)   = informational (maps, acknowledged)
+    neutral       = everything else
+*/
 @theme {
-  --color-surface: #0f172a;
-  --color-surface-raised: #1e293b;
-  --color-danger: #dc2626;
-  --color-danger-bright: #ef4444;
+  --color-page: #f5f7fa;
+  --color-card: #ffffff;
+  --color-ink: #0f172a;
+  --color-ink-soft: #475569;
+  --color-ink-faint: #94a3b8;
+  --color-line: #e5e9f0;
+  --color-line-strong: #d6dce5;
+  --color-brand: #dc2626;
+  --color-brand-deep: #b91c1c;
+  --color-brand-soft: #fef2f2;
+  --color-safe: #059669;
+  --color-safe-soft: #ecfdf5;
+  --color-warn: #d97706;
+  --color-warn-soft: #fffbeb;
+  --color-info: #0284c7;
+  --color-info-soft: #f0f9ff;
 }
 
 html,
@@ -14,8 +35,8 @@ body,
 }
 
 body {
-  background: var(--color-surface);
-  color: #e2e8f0;
+  background: var(--color-page);
+  color: var(--color-ink-soft);
   font-family:
     ui-sans-serif,
     system-ui,
@@ -25,6 +46,63 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior-y: none;
+}
+
+/* ---- Reusable, consistent building blocks ---- */
+
+.card {
+  border-radius: 1rem;
+  border: 1px solid var(--color-line);
+  background: var(--color-card);
+  box-shadow:
+    0 1px 2px rgb(15 23 42 / 0.04),
+    0 4px 12px rgb(15 23 42 / 0.04);
+}
+
+.btn {
+  border-radius: 0.75rem;
+  font-weight: 600;
+  transition:
+    background-color 0.15s ease,
+    transform 0.1s ease;
+}
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-primary {
+  background: var(--color-brand);
+  color: #fff;
+}
+.btn-primary:hover {
+  background: var(--color-brand-deep);
+}
+
+.btn-quiet {
+  background: #fff;
+  color: var(--color-ink-soft);
+  border: 1px solid var(--color-line-strong);
+}
+.btn-quiet:hover {
+  background: var(--color-page);
+}
+
+.input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-line-strong);
+  background: #fff;
+  padding: 0.7rem 1rem;
+  font-size: 0.9375rem;
+  color: var(--color-ink);
+}
+.input::placeholder {
+  color: var(--color-ink-faint);
+}
+.input:focus {
+  outline: none;
+  border-color: var(--color-brand);
+  box-shadow: 0 0 0 3px rgb(220 38 38 / 0.1);
 }
 
 /* Big, thumb-friendly SOS button */
@@ -37,15 +115,15 @@ body {
 
 @keyframes pulse-ring {
   0% {
-    transform: scale(0.95);
-    opacity: 0.7;
+    transform: scale(0.98);
+    opacity: 0.65;
   }
   70% {
-    transform: scale(1.15);
+    transform: scale(1.12);
     opacity: 0;
   }
   100% {
-    transform: scale(1.15);
+    transform: scale(1.12);
     opacity: 0;
   }
 }
@@ -54,12 +132,19 @@ body {
 .pulse-ring::after {
   content: '';
   position: absolute;
-  inset: -4px;
+  inset: -6px;
   border-radius: 9999px;
-  border: 3px solid var(--color-danger-bright);
-  animation: pulse-ring 1.6s ease-out infinite;
+  border: 3px solid rgb(220 38 38 / 0.55);
+  animation: pulse-ring 1.8s ease-out infinite;
 }
 
 .pulse-ring::after {
-  animation-delay: 0.8s;
+  animation-delay: 0.9s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-ring::before,
+  .pulse-ring::after {
+    animation: none;
+  }
 }

@@ -18,10 +18,17 @@ export default function App() {
   return (
     <HashRouter>
       <div className="mx-auto flex h-full max-w-lg flex-col">
-        <header className="flex items-center justify-between border-b border-slate-800 px-4 py-3">
+        <header className="flex items-center justify-between border-b border-line bg-card px-4 py-3">
           <div className="flex items-center gap-2">
-            <span className="inline-block size-6 rounded-md bg-red-700" aria-hidden />
-            <h1 className="text-lg font-bold tracking-tight">RakshaNet</h1>
+            <span className="inline-flex size-7 items-center justify-center rounded-lg bg-brand" aria-hidden>
+              <svg className="size-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M12 2 4 6v6c0 5 3.4 8.4 8 10 4.6-1.6 8-5 8-10V6l-8-4Z" />
+              </svg>
+            </span>
+            <div>
+              <h1 className="text-base font-bold leading-tight text-ink">RakshaNet</h1>
+              <p className="text-[11px] leading-tight text-ink-faint">Safety, even offline</p>
+            </div>
           </div>
           <OfflineBadge />
         </header>
@@ -38,7 +45,7 @@ export default function App() {
           </Routes>
         </main>
 
-        <nav className="fixed inset-x-0 bottom-0 mx-auto max-w-lg border-t border-slate-800 bg-slate-950/95 backdrop-blur">
+        <nav className="fixed inset-x-0 bottom-0 mx-auto max-w-lg border-t border-line bg-card/95 backdrop-blur">
           <ul className="grid grid-cols-4">
             {TABS.map(({ to, label, icon: Icon, end }) => (
               <li key={to}>
@@ -46,8 +53,8 @@ export default function App() {
                   to={to}
                   end={end}
                   className={({ isActive }) =>
-                    `flex flex-col items-center gap-0.5 py-2.5 text-xs ${
-                      isActive ? 'font-semibold text-red-400' : 'text-slate-400'
+                    `flex flex-col items-center gap-0.5 py-2.5 text-[11px] ${
+                      isActive ? 'font-semibold text-brand' : 'text-ink-soft'
                     }`
                   }
                 >

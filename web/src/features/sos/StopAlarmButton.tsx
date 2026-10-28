@@ -2,8 +2,8 @@ import { useEvents } from '../../store/eventsStore';
 import { stopAlarm } from '../../services/alarm';
 
 /**
- * Hold-to-stop — prevents an accidental tap from silencing the alarm,
- * while still allowing a quick stop when safe.
+ * Stops the siren with a confirmation — an accidental tap must not
+ * silence the alarm when you still need it.
  */
 export function StopAlarmButton({ eventId }: { eventId?: string }) {
   const { resolveEvent, setNotice } = useEvents();
@@ -26,7 +26,7 @@ export function StopAlarmButton({ eventId }: { eventId?: string }) {
     <button
       type="button"
       onClick={() => void handle()}
-      className="flex-1 rounded-xl bg-slate-800 px-4 py-3 text-sm font-semibold text-slate-200 ring-1 ring-slate-700 hover:bg-slate-700"
+      className="btn btn-quiet flex-1 px-4 py-3 text-sm text-ink"
     >
       ⏹ Stop alarm
     </button>
