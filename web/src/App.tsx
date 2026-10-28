@@ -6,6 +6,7 @@ import { EventDetailScreen } from './features/history/EventDetailScreen';
 import { SettingsScreen } from './features/settings/SettingsScreen';
 import { NoticeBar } from './components/NoticeBar';
 import { OfflineBadge } from './components/OfflineBadge';
+import { FloatingSos } from './components/FloatingSos';
 
 const TABS = [
   { to: '/', label: 'SOS', icon: SosIcon, end: true },
@@ -65,6 +66,8 @@ export default function App() {
             ))}
           </ul>
         </nav>
+
+        <FloatingSos />
       </div>
     </HashRouter>
   );
