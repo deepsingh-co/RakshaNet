@@ -2,10 +2,17 @@ import { useEvents } from '../../store/eventsStore';
 import { stopAlarm } from '../../services/alarm';
 
 /**
- * Stops the siren with a confirmation — an accidental tap must not
- * silence the alarm when you still need it.
+ * Stop the alarm — the primary action during an active SOS.
+ * Confirmation prevents an accidental tap from silencing the alarm
+ * while you still need it.
  */
-export function StopAlarmButton({ eventId }: { eventId?: string }) {
+export function StopAlarmButton({
+  eventId,
+  big = false,
+}: {
+  eventId?: string;
+  big?: boolean;
+}) {
   const { resolveEvent, setNotice } = useEvents();
 
   const handle = async () => {
@@ -22,6 +29,18 @@ export function StopAlarmButton({ eventId }: { eventId?: string }) {
     setNotice('Alarm stopped and event marked resolved.');
   };
 
+  if (big) {
+    return (
+      <button
+        type="button"
+        onClick={() => void handle()}
+        className="btn w-full bg-safe py-4 text-base text-white shadow-[0_6px_20px_rgb(5_150_105/0.35)] hover:bg-emerald-700"
+      >
+        I&rsquo;m safe — stop alarm
+      </button>
+    );
+  }
+
   return (
     <button
       type="button"
@@ -30,5 +49,23 @@ export function StopAlarmButton({ eventId }: { eventId?: string }) {
     >
       ⏹ Stop alarm
     </button>
+  );
+}
+
+/** Small counter cell for the active-SOS summary strip. */
+export function Summary({
+  n,
+  label,
+  tone,
+}: {
+  n: number;
+  label: string;
+  tone: string;
+}) {
+  return (
+    <div className="flex-1 py-2">
+      <p className={`text-lg font-bold leading-none ${tone}`}>{n}</p>
+      <p className="mt-0.5 text-[11px] font-medium text-ink-faint">{label}</p>
+    </div>
   );
 }

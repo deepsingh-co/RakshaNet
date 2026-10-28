@@ -28,3 +28,8 @@ export function StatusChip({ status, detailed = false }: { status: DeliveryStatu
     </span>
   );
 }
+
+/*
+  Note: "Prepared" (HANDED_OFF) deliberately never says "Sent" —
+  the messaging app was opened, but the user must still press send.
+*/

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useEvents } from '../../store/eventsStore';
 import { EMERGENCY_TYPES, type EmergencyType } from '../../domain/types';
-import { StopAlarmButton } from './StopAlarmButton';
+import { StopAlarmButton, Summary } from './StopAlarmButton';
 import { DeliveryList } from './DeliveryList';
 import { LocationCard } from './LocationCard';
 import { ProtectionStatus } from './ProtectionStatus';
@@ -11,7 +11,7 @@ const HOLD_MS = 900;
 
 export function SosScreen() {
   const navigate = useNavigate();
-  const { trigger, alarmActive, events } = useEvents();
+  const { trigger, alarmActive, events, deliveries } = useEvents();
 
   const [type, setType] = useState<EmergencyType>('PERSONAL_SAFETY');
   const [note, setNote] = useState('');
@@ -71,34 +71,52 @@ export function SosScreen() {
 
   if (activeEvent || alarmActive) {
     const event = activeEvent ?? events[0];
+    const rows = event ? deliveries.filter((d) => d.eventId === event.id) : [];
+    const sentCount = rows.filter((r) => r.status === 'SENT' || r.status === 'ACKNOWLEDGED').length;
+    const preparedCount = rows.filter((r) => r.status === 'HANDED_OFF').length;
+    const pendingCount = rows.filter((r) => r.status === 'QUEUED' || r.status === 'FAILED').length;
+
     return (
       <div className="space-y-4">
-        <div className="card border-red-200 bg-brand-soft p-4">
-          <p className="flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-brand">
-            <span className="relative flex size-2.5">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-60" />
-              <span className="relative inline-flex size-2.5 rounded-full bg-brand" />
+        {/* Status header — live, unmistakable */}
+        <div className="overflow-hidden rounded-2xl border-2 border-brand bg-brand-soft">
+          <div className="flex items-center gap-2.5 px-4 py-3">
+            <span className="relative flex size-3">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-brand opacity-70" />
+              <span className="relative inline-flex size-3 rounded-full bg-brand" />
             </span>
-            SOS active
-          </p>
-          <p className="mt-1.5 text-sm text-brand/90">
-            Alarm is on and your alert is being prepared for each trusted contact.
-          </p>
+            <div>
+              <p className="text-sm font-black uppercase tracking-wide text-brand">SOS active</p>
+              <p className="text-xs text-brand/85">Alarm on · help is being requested</p>
+            </div>
+          </div>
+
+          {/* One-line summary — how many alerts reached out */}
+          {rows.length > 0 && (
+            <div className="flex divide-x divide-red-200 border-t border-red-200 bg-white/60 text-center">
+              <Summary n={sentCount} label="sent" tone="text-safe" />
+              <Summary n={preparedCount} label="prepared" tone="text-warn" />
+              <Summary n={pendingCount} label="pending" tone="text-ink-soft" />
+            </div>
+          )}
         </div>
+
+        {/* Primary action first — stop when safe */}
+        <StopAlarmButton eventId={event?.id} big />
 
         {event && (
           <>
-            <LocationCard event={event} />
             <DeliveryList eventId={event.id} />
+            <LocationCard event={event} />
           </>
         )}
 
-        <div className="flex gap-3">
-          <StopAlarmButton eventId={event?.id} />
-          <Link to="/contacts" className="btn btn-quiet flex-1 px-4 py-3 text-center text-sm">
-            Manage contacts
-          </Link>
-        </div>
+        <Link
+          to="/contacts"
+          className="btn btn-quiet block w-full px-4 py-3 text-center text-sm"
+        >
+          Manage contacts
+        </Link>
       </div>
     );
   }

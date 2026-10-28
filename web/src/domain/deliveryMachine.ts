@@ -45,7 +45,7 @@ export function isTerminal(status: DeliveryStatus): boolean {
 /** Human-readable, honest labels for the UI. */
 export const STATUS_LABELS: Record<DeliveryStatus, string> = {
   QUEUED: 'Queued',
-  HANDED_OFF: 'Prepared — complete send',
+  HANDED_OFF: 'Prepared',
   SENT: 'Sent',
   FAILED: 'Failed',
   ACKNOWLEDGED: 'Acknowledged',

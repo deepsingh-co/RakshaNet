@@ -78,7 +78,10 @@ function DeliveryRow({
         {row.error && row.status === 'FAILED' && (
           <p className="text-xs text-brand">{row.error}</p>
         )}
-        {row.status === 'HANDED_OFF' && (
+        {row.status === 'HANDED_OFF' && row.channel === 'CALL' && (
+          <p className="text-xs text-warn">Call screen opened — place the call to connect.</p>
+        )}
+        {row.status === 'HANDED_OFF' && row.channel !== 'CALL' && (
           <p className="text-xs text-warn">Message prepared — press send in the app.</p>
         )}
       </div>
@@ -86,11 +89,11 @@ function DeliveryRow({
       <StatusChip status={row.status} />
 
       <div className="flex w-full gap-2 sm:w-auto">
-        {row.status === 'QUEUED' && <Action onClick={onSend}>Send</Action>}
+        {row.status === 'QUEUED' && <Action onClick={onSend}>{row.channel === 'CALL' ? 'Call' : 'Send'}</Action>}
         {row.status === 'HANDED_OFF' && (
           <>
             <Action onClick={onConfirm} tone="success">
-              I sent it
+              {row.channel === 'CALL' ? 'Call connected' : 'I sent it'}
             </Action>
             <Action onClick={onFail} tone="muted">
               Failed
