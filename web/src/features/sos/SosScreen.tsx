@@ -1,18 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useEvents } from '../../store/eventsStore';
-import { useContacts } from '../../store/contactsStore';
 import { EMERGENCY_TYPES, type EmergencyType } from '../../domain/types';
 import { StopAlarmButton } from './StopAlarmButton';
 import { DeliveryList } from './DeliveryList';
 import { LocationCard } from './LocationCard';
+import { ProtectionStatus } from './ProtectionStatus';
 
 const HOLD_MS = 900;
 
 export function SosScreen() {
   const navigate = useNavigate();
   const { trigger, alarmActive, events } = useEvents();
-  const contacts = useContacts((s) => s.contacts);
 
   const [type, setType] = useState<EmergencyType>('PERSONAL_SAFETY');
   const [note, setNote] = useState('');
@@ -20,7 +19,6 @@ export function SosScreen() {
   const [firing, setFiring] = useState(false);
 
   const holdStart = useRef(0);
-  const consented = contacts.filter((c) => c.consent === 'CONSENTED');
   const activeEvent = events.find((e) => e.status === 'ACTIVE');
 
   const stopHold = () => {
@@ -107,18 +105,7 @@ export function SosScreen() {
 
   return (
     <div className="flex flex-col items-center gap-5 pt-2">
-      {consented.length === 0 && (
-        <div className="card w-full border-amber-200 bg-warn-soft p-3.5 text-sm text-warn">
-          <p className="font-semibold">No trusted contacts yet</p>
-          <p className="mt-0.5 text-warn/85">
-            SOS still records the event and sounds the alarm —{' '}
-            <Link to="/contacts" className="font-semibold underline">
-              add a contact
-            </Link>{' '}
-            so alerts can be sent.
-          </p>
-        </div>
-      )}
+      <ProtectionStatus />
 
       {/* Emergency type */}
       <fieldset className="w-full">
