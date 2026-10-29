@@ -1,15 +1,26 @@
+import { useAuth } from '../store/authStore';
+
 /**
  * Public landing page — answers "what is this?" in under a minute.
  * Lives at `/`; the app itself is at `/#/` (plain anchors, no router here).
  * Honesty rules apply here too: WhatsApp limitations are stated plainly.
  */
+
+/** Signed-in users go straight to the app; new visitors start at signup. */
+function useAppHref(): string {
+  const hasSession = useAuth((s) => s.session !== null);
+  return hasSession ? '#/' : '#/signup';
+}
+
 export function LandingPage() {
+  const appHref = useAppHref();
+
   return (
     <div className="min-h-full bg-page">
-      <SiteHeader />
+      <SiteHeader appHref={appHref} />
 
       <main>
-        <Hero />
+        <Hero appHref={appHref} />
         <TrustStrip />
         <Problem />
         <Features />
@@ -17,7 +28,7 @@ export function LandingPage() {
         <HonestyBox />
         <Privacy />
         <Faq />
-        <FinalCta />
+        <FinalCta appHref={appHref} />
       </main>
 
       <SiteFooter />
@@ -25,7 +36,7 @@ export function LandingPage() {
   );
 }
 
-function SiteHeader() {
+function SiteHeader({ appHref }: { appHref: string }) {
   return (
     <header className="sticky top-0 z-30 border-b border-line bg-card/90 backdrop-blur">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
@@ -41,7 +52,7 @@ function SiteHeader() {
           <a href="#features" className="hidden px-2 hover:text-ink sm:block">Features</a>
           <a href="#how" className="hidden px-2 hover:text-ink sm:block">How it works</a>
           <a href="#faq" className="hidden px-2 hover:text-ink sm:block">FAQ</a>
-          <a href="#/" className="btn btn-primary px-4 py-2 text-sm">
+          <a href={appHref} className="btn btn-primary px-4 py-2 text-sm">
             Open app
           </a>
         </nav>
@@ -50,7 +61,7 @@ function SiteHeader() {
   );
 }
 
-function Hero() {
+function Hero({ appHref }: { appHref: string }) {
   return (
     <section className="relative overflow-hidden">
       <div
@@ -79,7 +90,7 @@ function Hero() {
         </p>
 
         <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-          <a href="#/" className="btn btn-primary w-full px-8 py-3.5 text-base sm:w-auto">
+          <a href={appHref} className="btn btn-primary w-full px-8 py-3.5 text-base sm:w-auto">
             Open the app — it&rsquo;s free
           </a>
           <a href="#how" className="btn btn-quiet w-full px-8 py-3.5 text-base sm:w-auto">
@@ -88,7 +99,7 @@ function Hero() {
         </div>
 
         <p className="mt-4 text-xs text-ink-faint">
-          No account needed · Installable on your phone · Your data stays on your device
+          Free to start · Installable on your phone · Your data stays on your device
         </p>
       </div>
     </section>
@@ -326,7 +337,7 @@ function Faq() {
   );
 }
 
-function FinalCta() {
+function FinalCta({ appHref }: { appHref: string }) {
   return (
     <section className="bg-card py-16">
       <div className="mx-auto max-w-3xl px-4 text-center">
@@ -334,13 +345,13 @@ function FinalCta() {
           Set up your safety circle — in 2 minutes
         </h2>
         <p className="mx-auto mt-3 max-w-xl leading-relaxed text-ink-soft">
-          Add the people you trust, agree on your emergency plan, and you are ready —
-          online or off.
+          Create your account, add the people you trust, agree on your emergency plan, and
+          you are ready — online or off.
         </p>
-        <a href="#/" className="btn btn-primary mt-7 inline-block px-10 py-3.5 text-base">
+        <a href={appHref} className="btn btn-primary mt-7 inline-block px-10 py-3.5 text-base">
           Open RakshaNet
         </a>
-        <p className="mt-3 text-xs text-ink-faint">Free · No account needed · Works offline</p>
+        <p className="mt-3 text-xs text-ink-faint">Free · Account on your device · Works offline</p>
       </div>
     </section>
   );

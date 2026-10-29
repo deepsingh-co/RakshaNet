@@ -6,12 +6,14 @@ import { LandingPage } from './landing/LandingPage';
 import { useContacts } from './store/contactsStore';
 import { useSettings } from './store/settingsStore';
 import { useEvents } from './store/eventsStore';
+import { useAuth } from './store/authStore';
 import './styles/index.css';
 
 // Auto-updating service worker: precached app shell → works fully offline.
 registerSW({ immediate: true });
 
 // Load persisted state before first paint.
+useAuth.getState().load();
 void useContacts.getState().load();
 void useSettings.getState().load();
 void useEvents.getState().load();

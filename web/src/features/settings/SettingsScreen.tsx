@@ -1,13 +1,25 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSettings } from '../../store/settingsStore';
+import { useAuth } from '../../store/authStore';
 import { clearAllData, db } from '../../data/db';
 
 export function SettingsScreen() {
+  const navigate = useNavigate();
   const { profile, loaded, load, save } = useSettings();
+  const session = useAuth((s) => s.session);
+  const logout = useAuth((s) => s.logout);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [saved, setSaved] = useState(false);
   const [stats, setStats] = useState({ events: 0, contacts: 0, deliveries: 0 });
+
+  const handleLogout = () => {
+    const ok = window.confirm('Log out? Your data stays on this device.');
+    if (!ok) return;
+    logout();
+    navigate('/login', { replace: true });
+  };
 
   useEffect(() => {
     if (!loaded) void load();
@@ -111,6 +123,26 @@ export function SettingsScreen() {
         <p className="mt-3 border-t border-line pt-3 text-xs text-ink-faint">
           RakshaNet never claims a message was delivered just because it opened WhatsApp.
         </p>
+      </section>
+
+      <section className="card p-4">
+        <h2 className="text-sm font-bold text-ink">Account</h2>
+        {session && (
+          <div className="mt-2 space-y-0.5">
+            <p className="text-sm font-semibold text-ink">{session.name}</p>
+            <p className="text-sm text-ink-soft">{session.contact}</p>
+          </div>
+        )}
+        <p className="mt-2 text-xs leading-relaxed text-ink-faint">
+          Your account lives only on this device. Signing out keeps your data here.
+        </p>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="btn btn-quiet mt-3 w-full py-2.5 text-sm"
+        >
+          Log out
+        </button>
       </section>
 
       <p className="pb-4 text-center text-xs text-ink-faint">RakshaNet web v0.1.0 · offline-first safety PWA</p>
