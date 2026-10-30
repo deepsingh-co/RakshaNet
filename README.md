@@ -2,6 +2,8 @@
 
 **Women & Child Safety and Development | Offline-First Safety Platform**
 
+**Owner:** Anurudh Singh
+
 RakshaNet is a mobile safety platform that helps women and children request emergency
 assistance, share their location with trusted contacts, and access essential safety features
 **even when internet connectivity is unavailable**.
@@ -10,6 +12,40 @@ Its core innovation is an offline-first SOS system combined with WhatsApp connec
 SMS/call fallback, GPS location tracking, and smartwatch integration. Essential emergency
 actions happen locally on the device; alerts go out through whatever communication channel is
 available.
+
+---
+
+## Live now — Web PWA
+
+The first release is a **fully working web PWA** (React + Vite + TypeScript), installable on
+any phone and usable completely offline.
+
+**Flow:** Landing page → Sign up / Log in → Safety app
+
+| Screen | What it does |
+|---|---|
+| **Landing** (`/`) | Explains the project, honest about WhatsApp limitations |
+| **Sign up / Log in** (`/#/signup`, `/#/login`) | Device-local accounts (no backend yet) |
+| **SOS** (`/#/`) | Big hold-to-trigger button, protection status, plain-language steps |
+| **Contacts** | Add trusted contacts, per-channel choice, consent + revoke |
+| **History** | Every event with per-contact, per-channel delivery status |
+| **Settings** | Profile, data stats, account/logout, delete-all |
+
+### Built & verified
+- **Design:** calm light theme; green = safe, red = SOS only, amber = needs your action
+- **Honest delivery:** `Queued → Prepared → Sent → Acknowledged`. WhatsApp hand-off is
+  **never** reported as "Sent" — the user must press send.
+- **Offline-first:** Dexie (IndexedDB), service worker precache, installable PWA
+- **15/15 unit tests**, clean TypeScript, production build green
+
+### Run it
+```bash
+cd web
+npm install
+npm run dev      # http://localhost:5173
+npm run build    # production build + service worker
+npx vitest run   # unit tests
+```
 
 ---
 
@@ -70,6 +106,17 @@ available.
 
 ## Tech Stack
 
+### Web PWA (built)
+| Layer | Technology |
+|---|---|
+| UI | React 19, TypeScript, Tailwind CSS 4 |
+| Build | Vite, vite-plugin-pwa (Workbox) |
+| State | Zustand |
+| Offline storage | Dexie (IndexedDB) |
+| Routing | React Router (HashRouter) |
+| Tests | Vitest |
+
+### Planned — Android & Backend
 | Component | Technology |
 |---|---|
 | Android app | Kotlin, Jetpack Compose, Material 3 |
@@ -83,7 +130,7 @@ available.
 | Security | Android Keystore, HTTPS/TLS, JWT auth, RBAC |
 | Build & CI | Gradle KTS, Version Catalog, GitHub Actions |
 
-**Minimum SDK:** 24 (Android 7.0) · **Target SDK:** 35
+**Minimum SDK (Android):** 24 (Android 7.0) · **Target SDK:** 35
 
 ---
 
@@ -94,31 +141,26 @@ checklists, and risk register.
 
 | Phase | Scope | Status |
 |---|---|---|
-| 0 | Foundation (scaffold, CI, design system, permissions) | Not started |
-| 1 | **v1 production release** (offline SMS, GPS, contacts, WhatsApp/SMS, queue, privacy) | Not started |
+| 0 | Foundation (scaffold, CI, design system, permissions) | ✅ Done (Web) |
+| 1 | **Web PWA v1** (offline SOS, GPS, contacts, WhatsApp/SMS, queue, privacy, auth, landing) | ✅ Shipped |
 | 2 | Backend, acknowledgments, journey safety | Not started |
 | 3 | Wear OS companion | Not started |
-| 4 | WhatsApp Business API, nearby relay, multi-language | Not started |
+| 4 | WhatsApp Business API, backend auth, Android app, nearby relay, multi-language | Not started |
 
 ---
 
 ## Getting Started
 
-### Prerequisites
-- Android Studio (Ladybug or newer)
-- JDK 17+
-- A physical Android device for testing (emulators lack SMS/telephony behavior)
-
-### Build & run
+### Web PWA (works today)
 ```bash
-git clone <repo-url>
-cd RakshaNet
-# Open the android/ directory in Android Studio, or:
-cd android
-./gradlew :app:assembleDebug
-./gradlew test          # unit tests
-./gradlew lint          # static analysis
+git clone https://github.com/deepsingh-co/RakshaNet.git
+cd RakshaNet/web
+npm install
+npm run dev             # http://localhost:5173
 ```
+
+### Android (Phase 4+)
+- Android Studio (Ladybug or newer), JDK 17+, physical device for SMS/telephony testing.
 
 ### Backend (Phase 2+)
 ```bash
@@ -136,13 +178,15 @@ npm run dev             # http://localhost:3000
 - Sensitive data stays encrypted on-device; nothing is shared without your action.
 - Delivery status is always truthful: the app distinguishes preparing an alert from actually
   sending it.
+- **Accounts are device-local for now** (no backend yet). Passwords are stored hashed; your
+  data never leaves your device until a synced backend ships.
 
 ---
 
 ## Documentation
 
 - **[PLAN.md](PLAN.md)** — architecture, roadmap, milestones, risks, open questions
-- `docs/` — API specification, architecture decision records (coming soon)
+- **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — architecture diagrams
 
 ---
 
