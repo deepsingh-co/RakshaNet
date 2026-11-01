@@ -6,6 +6,7 @@ import { EventDetailScreen } from './features/history/EventDetailScreen';
 import { SettingsScreen } from './features/settings/SettingsScreen';
 import { LoginScreen } from './features/auth/LoginScreen';
 import { SignupScreen } from './features/auth/SignupScreen';
+import { AboutPage } from './site/AboutPage';
 import { NoticeBar } from './components/NoticeBar';
 import { OfflineBadge } from './components/OfflineBadge';
 import { FloatingSos } from './components/FloatingSos';
@@ -22,6 +23,9 @@ export default function App() {
   return (
     <HashRouter>
       <Routes>
+        {/* Public static pages — no login required. */}
+        <Route path="/about" element={<AboutPage />} />
+
         {/* Auth screens are standalone — no shell, no nav, one clear task. */}
         <Route path="/login" element={<LoginScreen />} />
         <Route path="/signup" element={<SignupScreen />} />

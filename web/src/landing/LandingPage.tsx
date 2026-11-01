@@ -370,12 +370,19 @@ function SiteFooter() {
           RakshaNet
         </p>
         <p className="text-sm text-ink-soft">Women &amp; Child Safety and Development · offline-first</p>
+
+        <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1 pt-1 text-sm font-medium text-ink-soft">
+          <a href="#/about" className="hover:text-ink">About us</a>
+          <a href="#/privacy" className="hover:text-ink">Privacy policy</a>
+          <a href="#/contact" className="hover:text-ink">Contact us</a>
+        </nav>
+
         <p className="mx-auto max-w-xl text-xs leading-relaxed text-ink-faint">
           RakshaNet helps you and your trusted contacts coordinate in an emergency. It does
           not replace emergency services. In immediate danger, also call your local
           emergency number.
         </p>
-        <p className="text-xs text-ink-faint">© 2026 RakshaNet</p>
+        <p className="text-xs text-ink-faint">© 2026 RakshaNet · Anurudh Singh</p>
       </div>
     </footer>
   );
