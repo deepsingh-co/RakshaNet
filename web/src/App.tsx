@@ -7,6 +7,7 @@ import { SettingsScreen } from './features/settings/SettingsScreen';
 import { LoginScreen } from './features/auth/LoginScreen';
 import { SignupScreen } from './features/auth/SignupScreen';
 import { AboutPage } from './site/AboutPage';
+import { PrivacyPage } from './site/PrivacyPage';
 import { NoticeBar } from './components/NoticeBar';
 import { OfflineBadge } from './components/OfflineBadge';
 import { FloatingSos } from './components/FloatingSos';
@@ -25,6 +26,7 @@ export default function App() {
       <Routes>
         {/* Public static pages — no login required. */}
         <Route path="/about" element={<AboutPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
 
         {/* Auth screens are standalone — no shell, no nav, one clear task. */}
         <Route path="/login" element={<LoginScreen />} />
