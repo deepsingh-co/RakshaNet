@@ -1,4 +1,4 @@
-import { Schema, model, type InferSchemaType, type Types } from 'mongoose';
+import { Schema, model, models, type Model, type InferSchemaType, type Types } from 'mongoose';
 
 /**
  * Append-only audit trail. The API never exposes update/delete for these
@@ -15,6 +15,7 @@ export const AUDIT_ACTIONS = [
   'AUTH_PASSWORD_RESET_REQUESTED',
   'AUTH_PASSWORD_RESET',
   'OTP_VERIFIED',
+  'PROFILE_UPDATED',
   'ACCOUNT_DELETION_REQUESTED',
   'CONTACT_CREATED',
   'CONTACT_UPDATED',
@@ -51,4 +52,6 @@ const auditSchema = new Schema(
 auditSchema.index({ createdAt: -1 });
 
 export type AuditDoc = InferSchemaType<typeof auditSchema> & { _id: Types.ObjectId };
-export const AuditLog = model('AuditLog', auditSchema);
+export const AuditLog =
+  (models.AuditLog as Model<InferSchemaType<typeof auditSchema>>) ??
+  model('AuditLog', auditSchema);

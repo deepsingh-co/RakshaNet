@@ -5,6 +5,9 @@ import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
 import { env } from './config/env.js';
 import { authRouter } from './routes/auth.js';
+import { contactsRouter } from './routes/contacts.js';
+import { usersRouter } from './routes/users.js';
+import { guardianRouter } from './routes/guardian.js';
 import { errorHandler, notFound } from './middleware/error.js';
 
 export function createApp() {
@@ -26,16 +29,10 @@ export function createApp() {
   app.use(cookieParser());
 
   // Auth endpoints are the most abused — tight limit.
-  app.use(
-    '/api/v1/auth',
-    rateLimit({
-      windowMs: 60_000,
-      limit: env.isTest ? 10_000 : 30,
-      standardHeaders: true,
-      legacyHeaders: false,
-    }),
-    authRouter,
-  );
+  app.use('/api/v1/auth', rateLimit({ windowMs: 60_000, limit: env.isTest ? 10_000 : 30, standardHeaders: true, legacyHeaders: false }), authRouter);
+  app.use('/api/v1/contacts', contactsRouter);
+  app.use('/api/v1/users', usersRouter);
+  app.use('/api/v1/guardian', guardianRouter);
 
   app.get('/api/v1/health', (_req, res) => {
     res.json({
