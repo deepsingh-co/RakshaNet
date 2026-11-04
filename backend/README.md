@@ -189,6 +189,53 @@ Client → server events are limited to `incident:subscribe`, `incident:unsubscr
 There is intentionally no create/update/delete route. Audit rows are written only by the
 trusted audit service, and every admin read of the audit log is itself audited.
 
+## Dashboard data APIs (Module 5)
+
+### Analytics
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/v1/analytics/summary` | Role-scoped metrics: incident totals, status/type/day breakdown, offline + escalation counts, average ack/resolve seconds, notification delivery truth |
+| GET | `/api/v1/analytics/incidents.csv` | Role-scoped CSV export (max 5000 rows, BOM for Excel) |
+
+Query: `from`, `to` (default: last 30 days), optional `ownerId` (ADMIN only, or a
+guardian's verified child). Users see only their own incidents; guardians see themselves
+plus `VERIFIED` children; admins see everything. Cross-user `ownerId` returns `403`.
+Every CSV export is audited as `ANALYTICS_EXPORTED`.
+
+`summary` returns `users` + `auditEvents` only for admins. Non-admin viewers get
+`linkedChildren` instead. Delivery counts are derived from real `Notification` rows —
+`simulated` counts console-mode sends so the dashboard never implies a real delivery.
+
+### Notifications
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/v1/notifications` | Delivery-monitoring feed, role-scoped; filters `status`, `channel`, `incidentId`, `ownerId`, `from`, `to`, `page`, `limit` |
+
+Returns `notifications` (destinations always masked), a `summary` with
+`queued/sent/delivered/failed/simulated` counts, and pagination. Admin reads are audited.
+
+### Incident dashboard additions
+
+- `GET /api/v1/incidents?active=true` — only statuses that still need attention
+  (`PENDING_SYNC`, `ALERTING`, `NOTIFIED`, `ACKNOWLEDGED`, `RESPONDING`, `ESCALATED`,
+  `DELIVERY_FAILED`). `active=false` returns closed/cancelled incidents.
+- Incident list/detail/status/note payloads include an `owner` summary
+  (`id`, `fullName`, `email`, `phoneMasked`, `role`, `accountType`) so the command center
+  can show who is in danger without exposing full phone numbers.
+
+### Admin provisioning
+
+Admin accounts cannot self-register. Provision one per environment:
+
+```bash
+npm run seed:admin -- --email admin@example.com --password 'StrongPass1' \
+  --name 'Control Room' --phone '+919800000001'
+```
+
+The script refuses to elevate an existing non-admin account. Running it twice is safe.
+
 ## Security notes
 
 - Passwords hashed with bcrypt (cost 12); hashes never leave the server.
@@ -210,8 +257,8 @@ trusted audit service, and every admin read of the audit log is itself audited.
 ## Tests
 
 ```bash
-npm test        # 45 tests (11 auth/health + 16 contacts/users/guardian + 9 incidents
-                #           + 6 Socket.IO + 3 audit API)
+npm test        # 50 tests (11 auth/health + 16 contacts/users/guardian + 9 incidents
+                #           + 6 Socket.IO + 3 audit API + 5 analytics/notifications)
 npm run typecheck
 ```
 

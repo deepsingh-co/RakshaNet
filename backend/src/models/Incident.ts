@@ -28,6 +28,17 @@ export const INCIDENT_STATUSES = [
 ] as const;
 export type IncidentStatus = (typeof INCIDENT_STATUSES)[number];
 
+/** Statuses that still need attention in the command center. */
+export const ACTIVE_INCIDENT_STATUSES: IncidentStatus[] = [
+  'PENDING_SYNC',
+  'ALERTING',
+  'NOTIFIED',
+  'ACKNOWLEDGED',
+  'RESPONDING',
+  'ESCALATED',
+  'DELIVERY_FAILED',
+];
+
 export const LOCATION_SOURCES = ['GPS', 'NETWORK', 'CACHED', 'MANUAL'] as const;
 export type LocationSource = (typeof LOCATION_SOURCES)[number];
 

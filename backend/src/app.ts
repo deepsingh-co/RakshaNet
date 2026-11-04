@@ -11,6 +11,8 @@ import { guardianRouter } from './routes/guardian.js';
 import { incidentsRouter } from './routes/incidents.js';
 import { notificationWebhookHandler } from './routes/notificationWebhook.js';
 import { auditRouter } from './routes/audit.js';
+import { analyticsRouter } from './routes/analytics.js';
+import { notificationsRouter } from './routes/notifications.js';
 import { errorHandler, notFound } from './middleware/error.js';
 
 export function createApp() {
@@ -46,6 +48,8 @@ export function createApp() {
   app.use('/api/v1/guardian', guardianRouter);
   app.use('/api/v1/incidents', incidentsRouter);
   app.use('/api/v1/audit', auditRouter);
+  app.use('/api/v1/analytics', analyticsRouter);
+  app.use('/api/v1/notifications', notificationsRouter);
 
   app.get('/api/v1/health', (_req, res) => {
     res.json({

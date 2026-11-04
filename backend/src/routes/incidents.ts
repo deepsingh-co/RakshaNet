@@ -2,6 +2,7 @@ import { Router, type Request } from 'express';
 import { Types } from 'mongoose';
 import { z } from 'zod';
 import {
+  ACTIVE_INCIDENT_STATUSES,
   INCIDENT_SEVERITIES,
   INCIDENT_STATUSES,
   INCIDENT_TYPES,
@@ -30,6 +31,7 @@ import {
   toIncident,
   toLocation,
   toNotification,
+  toOwner,
 } from '../services/incidentView.js';
 import { env } from '../config/env.js';
 
@@ -90,6 +92,7 @@ const listQuerySchema = z.object({
   from: isoDate.optional(),
   to: isoDate.optional(),
   offlineOnly: z.enum(['true', 'false']).optional(),
+  active: z.enum(['true', 'false']).optional(),
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(20),
 });
@@ -337,6 +340,7 @@ async function createIncidentForUser(
   });
 
   const payload = incidentPayload(incident, false, notifications);
+  payload.incident.owner = toOwner(user);
   emitToAdmins('incident:created', payload.incident);
   emitToUser(incident.userId.toString(), 'incident:created', payload.incident);
 
@@ -449,6 +453,8 @@ incidentsRouter.get(
     }
 
     if (q.status) filter.status = q.status;
+    else if (q.active === 'true') filter.status = { $in: ACTIVE_INCIDENT_STATUSES };
+    else if (q.active === 'false') filter.status = { $nin: ACTIVE_INCIDENT_STATUSES };
     if (q.type) filter.type = q.type;
     if (q.offlineOnly === 'true') filter.offlineCreated = true;
     if (q.from || q.to) {
@@ -461,6 +467,7 @@ incidentsRouter.get(
     const [total, incidents] = await Promise.all([
       Incident.countDocuments(filter),
       Incident.find(filter)
+        .populate('userId', 'fullName email phone role accountType')
         .sort({ startedAt: -1 })
         .skip((q.page - 1) * q.limit)
         .limit(q.limit),
@@ -482,10 +489,11 @@ incidentsRouter.get(
   asyncHandler(async (req, res) => {
     const { incident, relation } = await loadIncidentForViewer(req, req.params.id ?? '');
 
-    const [locations, notifications, notificationSummary] = await Promise.all([
+    const [locations, notifications, notificationSummary, owner] = await Promise.all([
       Location.find({ incidentId: incident._id }).sort({ capturedAt: -1 }).limit(100),
       Notification.find({ incidentId: incident._id }).sort({ queuedAt: 1 }).limit(200),
       summarizeNotifications(incident._id),
+      User.findById(incident.userId).select('fullName email phone role accountType'),
     ]);
 
     await audit(req, {
@@ -498,7 +506,7 @@ incidentsRouter.get(
     });
 
     res.json({
-      incident: toIncident(incident),
+      incident: { ...toIncident(incident), owner: owner ? toOwner(owner) : null },
       viewerRelation: relation,
       locations: locations.map(toLocation),
       notifications: notifications.map(toNotification),
@@ -719,7 +727,10 @@ incidentsRouter.patch(
       detail: `status=${input.status} as ${relation.toLowerCase()}`,
     });
 
-    const payload = toIncident(incident);
+    const owner = await User.findById(incident.userId).select(
+      'fullName email phone role accountType',
+    );
+    const payload = { ...toIncident(incident), owner: owner ? toOwner(owner) : null };
     emitToUser(incident.userId.toString(), 'incident:status_changed', payload);
     emitToIncident(incident._id.toString(), 'incident:status_changed', payload);
     emitToAdmins('incident:updated', payload);
@@ -770,7 +781,10 @@ incidentsRouter.post(
       resourceId: incident._id.toString(),
     });
 
-    const payload = toIncident(incident);
+    const owner = await User.findById(incident.userId).select(
+      'fullName email phone role accountType',
+    );
+    const payload = { ...toIncident(incident), owner: owner ? toOwner(owner) : null };
     emitToIncident(incident._id.toString(), 'incident:note_added', payload);
     emitToUser(incident.userId.toString(), 'incident:note_added', payload);
     emitToAdmins('incident:updated', payload);

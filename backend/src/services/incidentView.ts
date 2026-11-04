@@ -3,8 +3,43 @@ import type { Location } from '../models/Location.js';
 import type { Notification } from '../models/Notification.js';
 import { maskPhone } from '../models/TrustedContact.js';
 
+interface OwnerLike {
+  _id: { toString(): string };
+  fullName: string;
+  email: string;
+  phone: string;
+  role?: string;
+  accountType?: string;
+}
+
+/** Owner summary safe to show in the command center (phone masked). */
+export function toOwner(owner: OwnerLike) {
+  return {
+    id: owner._id.toString(),
+    fullName: owner.fullName,
+    email: owner.email,
+    phoneMasked: maskPhone(owner.phone),
+    role: owner.role ?? '',
+    accountType: owner.accountType ?? '',
+  };
+}
+
+function ownerFromPopulated(userId: unknown) {
+  if (
+    userId &&
+    typeof userId === 'object' &&
+    'fullName' in userId &&
+    'phone' in userId &&
+    '_id' in userId
+  ) {
+    return toOwner(userId as OwnerLike);
+  }
+  return null;
+}
+
 /** Public incident shape. No internal fields, no raw device identifiers. */
 export function toIncident(i: InstanceType<typeof Incident>) {
+  const owner = ownerFromPopulated(i.userId);
   const clientCreatedAt = i.clientCreatedAt ?? i.startedAt;
   const offlineDelaySeconds = i.offlineCreated
     ? Math.max(0, Math.round((i.receivedAt.getTime() - clientCreatedAt.getTime()) / 1000))
@@ -12,7 +47,8 @@ export function toIncident(i: InstanceType<typeof Incident>) {
 
   return {
     id: i._id.toString(),
-    userId: i.userId.toString(),
+    userId: owner ? owner.id : i.userId.toString(),
+    owner,
     clientIncidentId: i.clientIncidentId,
     type: i.type,
     severity: i.severity,
