@@ -69,6 +69,18 @@ export function initSocketServer(
     }
     try {
       const payload = verifyAccessToken(token);
+      const expiresAt = (payload as AccessPayload & { exp?: number }).exp;
+      if (typeof expiresAt === 'number') {
+        const remainingMs = expiresAt * 1000 - Date.now();
+        if (remainingMs <= 0) {
+          next(new Error('UNAUTHENTICATED'));
+          return;
+        }
+        // A socket must not outlive the access token that opened it.
+        const timer = setTimeout(() => socket.disconnect(true), remainingMs);
+        timer.unref();
+        socket.once('disconnect', () => clearTimeout(timer));
+      }
       const state: SocketState = { user: payload, incidentIds: new Set<string>() };
       socket.data.state = state;
       next();

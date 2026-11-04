@@ -4,6 +4,7 @@ import { io as createClient, type Socket } from 'socket.io-client';
 import type { Server as IOServer } from 'socket.io';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import request from 'supertest';
+import jwt from 'jsonwebtoken';
 import { createApp } from '../app.js';
 import { connectDb, disconnectDb } from '../db/connect.js';
 import { User } from '../models/User.js';
@@ -16,6 +17,7 @@ import { RefreshToken } from '../models/RefreshToken.js';
 import { AuditLog } from '../models/AuditLog.js';
 import { hashPassword } from '../services/password.js';
 import { signAccessToken } from '../services/tokens.js';
+import { env } from '../config/env.js';
 import { initSocketServer } from './socketServer.js';
 
 const app = createApp();
@@ -268,6 +270,26 @@ describe('authenticated Socket.IO', () => {
     const event = await ackPromise;
     expect(event.status).toBe('ACKNOWLEDGED');
     expect(event.acknowledgedAt).toBeTruthy();
+  });
+
+  it('disconnects a socket when its access token expires', async () => {
+    const user = await createUser();
+    const shortToken = jwt.sign(
+      {
+        sub: user.user._id.toString(),
+        role: 'USER',
+        accountType: 'INDIVIDUAL',
+        type: 'access',
+      },
+      env.JWT_ACCESS_SECRET,
+      { expiresIn: '1s' },
+    );
+
+    const { socket } = await connectReady(shortToken);
+    expect(socket.connected).toBe(true);
+
+    await new Promise<void>((resolve) => socket.once('disconnect', () => resolve()));
+    expect(socket.connected).toBe(false);
   });
 
   it('delivers every new incident to the admin room', async () => {

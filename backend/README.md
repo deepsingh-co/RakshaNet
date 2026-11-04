@@ -157,6 +157,8 @@ const pong = await socket.emitWithAck('ping:client');
   server-side: the owner, an admin, or a guardian with a `VERIFIED` link may subscribe.
   Strangers receive `{ ok: false, error: 'FORBIDDEN' }`; max 20 subscriptions per socket.
 - Rooms are left automatically on disconnect; no client-supplied room names are trusted.
+- A socket is force-disconnected when its access token expires, so a connection never
+  outlives the credential that opened it.
 
 ### Server events
 
@@ -208,8 +210,8 @@ trusted audit service, and every admin read of the audit log is itself audited.
 ## Tests
 
 ```bash
-npm test        # 44 tests (11 auth/health + 16 contacts/users/guardian + 9 incidents
-                #           + 5 Socket.IO + 3 audit API)
+npm test        # 45 tests (11 auth/health + 16 contacts/users/guardian + 9 incidents
+                #           + 6 Socket.IO + 3 audit API)
 npm run typecheck
 ```
 
