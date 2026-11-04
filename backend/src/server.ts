@@ -3,24 +3,34 @@ import { createApp } from './app.js';
 import { env } from './config/env.js';
 import { connectDb } from './db/connect.js';
 import { startEscalationSweeper } from './services/escalation.js';
+import { initSocketServer } from './realtime/socketServer.js';
 
 async function main(): Promise<void> {
   await connectDb();
 
   const app = createApp();
   const server = http.createServer(app);
+  const io = initSocketServer(server);
   const stopSweeper = startEscalationSweeper();
 
   server.listen(env.PORT, () => {
     // eslint-disable-next-line no-console
     console.log(`[api] SURAKSHA AI backend listening on http://localhost:${env.PORT}`);
+    // eslint-disable-next-line no-console
+    console.log('[api] Socket.IO ready on the same origin (JWT handshake required)');
+  });
+
+  // Surface unhandled socket middleware errors in logs instead of silence.
+  io.engine.on('connection_error', (err) => {
+    // eslint-disable-next-line no-console
+    console.warn(`[socket] connection rejected: ${err.message}`);
   });
 
   const shutdown = (signal: string) => {
     // eslint-disable-next-line no-console
     console.log(`[api] ${signal} received — shutting down`);
     stopSweeper();
-    server.close(() => process.exit(0));
+    io.close(() => process.exit(0));
     setTimeout(() => process.exit(1), 10_000).unref();
   };
 

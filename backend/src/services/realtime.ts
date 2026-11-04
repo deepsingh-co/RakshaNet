@@ -3,7 +3,7 @@
  * `setRealtimeIO`; until then every emit is a safe no-op so routes never
  * have to care whether realtime is available.
  */
-interface RoomEmitter {
+export interface RoomEmitter {
   to(room: string): { emit(event: string, payload: unknown): unknown };
 }
 

@@ -10,6 +10,7 @@ import { usersRouter } from './routes/users.js';
 import { guardianRouter } from './routes/guardian.js';
 import { incidentsRouter } from './routes/incidents.js';
 import { notificationWebhookHandler } from './routes/notificationWebhook.js';
+import { auditRouter } from './routes/audit.js';
 import { errorHandler, notFound } from './middleware/error.js';
 
 export function createApp() {
@@ -44,6 +45,7 @@ export function createApp() {
   app.use('/api/v1/users', usersRouter);
   app.use('/api/v1/guardian', guardianRouter);
   app.use('/api/v1/incidents', incidentsRouter);
+  app.use('/api/v1/audit', auditRouter);
 
   app.get('/api/v1/health', (_req, res) => {
     res.json({

@@ -92,8 +92,8 @@ with the 6-digit consent code (24h expiry, hashed at rest). Either party can rev
 | PATCH | `/api/v1/incidents/:id/status` | role-scoped | Acknowledge / respond / escalate / resolve / cancel |
 | POST | `/api/v1/incidents/:id/notes` | owner / guardian / ADMIN | Responder note |
 | GET | `/api/v1/incidents/:id/notifications` | owner / guardian / ADMIN | Per-recipient delivery status |
-| POST | `/api/v1/incidents/:id/locations` | owner / guardian / ADMIN | Append a location ping |
-| POST | `/api/v1/incidents/:id/locations/batch` | owner / guardian / ADMIN | Flush offline location pings |
+| POST | `/api/v1/incidents/:id/locations` | owner only | Append a location ping |
+| POST | `/api/v1/incidents/:id/locations/batch` | owner only | Flush offline location pings |
 | GET | `/api/v1/incidents/:id/locations` | owner / guardian / ADMIN | Paginated location timeline |
 
 ### Lifecycle
@@ -132,6 +132,61 @@ CREATED -> PENDING_SYNC -> ALERTING -> NOTIFIED / DELIVERY_FAILED
 - Location points older than `LOCATION_STALE_AFTER_SECONDS` are stored with
   `isStale: true` and never replace a fresher incident snapshot.
 
+## Realtime (Module 4 — Socket.IO)
+
+Socket.IO runs on the same origin/path (`/socket.io`). Every connection must present a
+valid **access token** — no anonymous sockets.
+
+```js
+import { io } from 'socket.io-client';
+
+const socket = io('http://localhost:4000', {
+  auth: { token: accessToken },          // or Authorization: Bearer <token>
+  transports: ['websocket'],
+});
+
+socket.on('session:ready', ({ userId, role, rooms }) => { /* joined user room */ });
+
+await socket.emitWithAck('incident:subscribe', { incidentId });
+await socket.emitWithAck('incident:unsubscribe', { incidentId });
+const pong = await socket.emitWithAck('ping:client');
+```
+
+- Every socket joins `user:<id>`. Admins additionally join `admins`.
+- `incident:<id>` is joined only through `incident:subscribe`, which is verified
+  server-side: the owner, an admin, or a guardian with a `VERIFIED` link may subscribe.
+  Strangers receive `{ ok: false, error: 'FORBIDDEN' }`; max 20 subscriptions per socket.
+- Rooms are left automatically on disconnect; no client-supplied room names are trusted.
+
+### Server events
+
+| Event | Audience | Payload |
+|---|---|---|
+| `session:ready` | socket | `{ userId, role, rooms }` |
+| `incident:created` | owner + admins | public incident |
+| `incident:status_changed` | owner + incident room + admins | public incident |
+| `incident:location_updated` | owner + incident room + admins | `{ incidentId, location }` |
+| `incident:acknowledged` | owner + incident room | public incident |
+| `incident:resolved` | owner + incident room | public incident |
+| `incident:cancelled` | owner + incident room | public incident |
+| `incident:note_added` | owner + incident room + admins | public incident |
+| `notification:updated` | owner + incident room | public notification |
+| `notification:delivered` | owner + incident room + admins | public notification |
+
+Client → server events are limited to `incident:subscribe`, `incident:unsubscribe`, and
+`ping:client`.
+
+## Audit log API (admin only, read-only)
+
+| Method | Path | Description |
+|---|---|---|
+| GET | `/api/v1/audit` | Paginated logs; filters `action`, `actorId`, `actorRole`, `resourceType`, `resourceId`, `outcome`, `from`, `to`, `page`, `limit` |
+| GET | `/api/v1/audit/actions` | All valid action names (for dashboard filters) |
+| GET | `/api/v1/audit/:id` | Single immutable record |
+
+There is intentionally no create/update/delete route. Audit rows are written only by the
+trusted audit service, and every admin read of the audit log is itself audited.
+
 ## Security notes
 
 - Passwords hashed with bcrypt (cost 12); hashes never leave the server.
@@ -153,7 +208,8 @@ CREATED -> PENDING_SYNC -> ALERTING -> NOTIFIED / DELIVERY_FAILED
 ## Tests
 
 ```bash
-npm test        # 36 tests (11 auth/health + 16 contacts/users/guardian + 9 incidents)
+npm test        # 44 tests (11 auth/health + 16 contacts/users/guardian + 9 incidents
+                #           + 5 Socket.IO + 3 audit API)
 npm run typecheck
 ```
 
