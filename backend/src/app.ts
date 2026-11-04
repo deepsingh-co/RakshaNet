@@ -28,6 +28,12 @@ export function createApp() {
         cb(new Error(`Origin not allowed: ${origin}`));
       },
       credentials: true,
+      exposedHeaders: [
+        'Content-Disposition',
+        'X-Export-Rows',
+        'X-Export-Total',
+        'X-Export-Truncated',
+      ],
     }),
   );
   // Provider webhooks must see the exact raw body for HMAC verification, so

@@ -425,6 +425,14 @@ describe('incidents', () => {
     expect(childList.status).toBe(200);
     expect(childList.body.incidents).toHaveLength(1);
 
+    // The guardian's default feed must include verified children too,
+    // otherwise the dashboard would show an empty live queue.
+    const guardianFeed = await request(app)
+      .get('/api/v1/incidents?active=true')
+      .set(auth(guardianToken));
+    expect(guardianFeed.status).toBe(200);
+    expect(guardianFeed.body.incidents.map((i: { id: string }) => i.id)).toContain(incidentId);
+
     const ack = await request(app)
       .patch(`/api/v1/incidents/${incidentId}/status`)
       .set(auth(guardianToken))
@@ -452,6 +460,13 @@ describe('incidents', () => {
     expect(resolved.status).toBe(200);
     expect(resolved.body.incident.status).toBe('RESOLVED');
     expect(resolved.body.incident.resolvedAt).toBeTruthy();
+
+    // Closed incidents must still be visible in the guardian's history feed.
+    const guardianHistory = await request(app)
+      .get('/api/v1/incidents?active=false')
+      .set(auth(guardianToken));
+    expect(guardianHistory.status).toBe(200);
+    expect(guardianHistory.body.incidents.map((i: { id: string }) => i.id)).toContain(incidentId);
 
     const afterResolve = await request(app)
       .patch(`/api/v1/incidents/${incidentId}/status`)

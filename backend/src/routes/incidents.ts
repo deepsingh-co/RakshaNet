@@ -18,10 +18,8 @@ import { asyncHandler } from '../middleware/asyncHandler.js';
 import { requireAuth } from '../middleware/auth.js';
 import { ApiError } from '../middleware/error.js';
 import { audit } from '../services/audit.js';
-import {
-  canViewUserIncidents,
-  loadIncidentForViewer,
-} from '../services/incidentAccess.js';
+import { loadIncidentForViewer } from '../services/incidentAccess.js';
+import { resolveDataScope, scopeFilter } from '../services/scope.js';
 import {
   dispatchIncidentAlerts,
   summarizeNotifications,
@@ -441,16 +439,11 @@ incidentsRouter.get(
   '/',
   asyncHandler(async (req, res) => {
     const q = listQuerySchema.parse(req.query);
-    const auth = req.auth!;
 
-    const filter: Record<string, unknown> = {};
-
-    if (q.ownerId) {
-      await canViewUserIncidents(req, q.ownerId);
-      filter.userId = q.ownerId;
-    } else if (auth.role !== 'ADMIN') {
-      filter.userId = auth.sub;
-    }
+    // Guardians see their own incidents plus those of VERIFIED children.
+    // Explicit ownerId narrows (and is access-checked) inside resolveDataScope.
+    const scope = await resolveDataScope(req, q.ownerId);
+    const filter: Record<string, unknown> = scopeFilter(scope);
 
     if (q.status) filter.status = q.status;
     else if (q.active === 'true') filter.status = { $in: ACTIVE_INCIDENT_STATUSES };

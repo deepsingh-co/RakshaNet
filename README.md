@@ -49,6 +49,53 @@ npx vitest run   # unit tests
 
 ---
 
+## Backend API + Command Center (built)
+
+The synced platform now has a real backend and a separate operations dashboard.
+
+### Backend (`backend/`)
+Node.js + Express + MongoDB + TypeScript. Modules delivered so far:
+
+- **Auth & roles** — JWT access tokens, rotating hashed refresh tokens, explicit
+  `USER` / `GUARDIAN` / `ADMIN` roles with no inheritance, account suspension.
+- **Trusted contacts** — owner-private contacts, OTP verification, primary
+  selection, per-channel preferences.
+- **Guardians & children** — consent-code guardian links, verified child accounts.
+- **Incidents** — SOS/manual/fall/voice incidents, offline sync with
+  `clientIncidentId` idempotency and recorded offline delay, locations, notes,
+  lifecycle state machine, and escalation.
+- **Delivery truth** — per-recipient SMS/WhatsApp/push tracking; `SENT` means the
+  provider accepted the message, `DELIVERED` requires a signed webhook, console
+  mode records `simulated: true`.
+- **Realtime & audit** — authenticated Socket.IO events and an append-only audit log.
+- **Analytics & reports** — role-scoped summaries and capped CSV exports.
+
+### Command Center (`dashboard/`)
+Vite + React 18 + TypeScript + Leaflet + Socket.IO client. Eleven role-aware
+modules: Overview, Live Incidents, Live Map, Incident History, Users & Roles,
+Guardians & Children, Trusted Contacts, Notifications, Analytics & Reports,
+Audit Logs, Settings. It renders real backend data only; admins are provisioned
+on the backend and guardian permissions never inherit admin access.
+
+```bash
+cd backend
+cp .env.example .env
+npm install
+npm run seed:admin -- --email ops@example.com --password "<strong-password>" --phone "+919800000001"
+npm run dev             # http://localhost:4000
+
+cd ../dashboard
+cp .env.example .env    # VITE_API_URL=http://localhost:4000/api/v1
+npm install
+npm run dev             # http://localhost:5174
+```
+
+See **[backend/README.md](backend/README.md)** and
+**[dashboard/README.md](dashboard/README.md)** for endpoints, environment
+variables, role rules, and verification details.
+
+---
+
 ## Features
 
 ### v1 — First Production Release
@@ -116,7 +163,18 @@ npx vitest run   # unit tests
 | Routing | React Router (HashRouter) |
 | Tests | Vitest |
 
-### Planned — Android & Backend
+### Backend + Command Center (built)
+| Layer | Technology |
+|---|---|
+| API | Node.js, Express, TypeScript, Mongoose |
+| Database | MongoDB |
+| Auth | JWT access tokens + rotating hashed refresh tokens, RBAC |
+| Realtime | Socket.IO (authenticated) |
+| Dashboard UI | React 18, Vite, TypeScript, React Router 6 |
+| Map | Leaflet 1.9 + OpenStreetMap tiles |
+| Charts | Inline SVG (no chart dependency) |
+
+### Planned — Android
 | Component | Technology |
 |---|---|
 | Android app | Kotlin, Jetpack Compose, Material 3 |
@@ -126,7 +184,6 @@ npx vitest run   # unit tests
 | WhatsApp | Sharing intents (v1); Business Cloud API (later) |
 | SMS & calls | `SmsManager`, calling intents |
 | Wearable | Wear OS APIs, Bluetooth LE (later) |
-| Backend | Node.js, Express, MongoDB |
 | Security | Android Keystore, HTTPS/TLS, JWT auth, RBAC |
 | Build & CI | Gradle KTS, Version Catalog, GitHub Actions |
 
@@ -143,9 +200,10 @@ checklists, and risk register.
 |---|---|---|
 | 0 | Foundation (scaffold, CI, design system, permissions) | ✅ Done (Web) |
 | 1 | **Web PWA v1** (offline SOS, GPS, contacts, WhatsApp/SMS, queue, privacy, auth, landing) | ✅ Shipped |
-| 2 | Backend, acknowledgments, journey safety | Not started |
-| 3 | Wear OS companion | Not started |
-| 4 | WhatsApp Business API, backend auth, Android app, nearby relay, multi-language | Not started |
+| 2 | **Backend API** (auth/RBAC, contacts, guardian links, incidents, locations, notifications, realtime, audit, analytics) | ✅ Built |
+| 2b | **Web Command Center** (11 role-aware operations modules) | ✅ Built |
+| 3 | Android app, Gnani AI voice integration, end-to-end mobile sync | In progress |
+| 4 | Wear OS companion, WhatsApp Business API, nearby relay, multi-language | Not started |
 
 ---
 
@@ -162,11 +220,18 @@ npm run dev             # http://localhost:5173
 ### Android (Phase 4+)
 - Android Studio (Ladybug or newer), JDK 17+, physical device for SMS/telephony testing.
 
-### Backend (Phase 2+)
+### Backend + Command Center
 ```bash
 cd backend
+cp .env.example .env    # fill in MongoDB and secrets
 npm install
-npm run dev             # http://localhost:3000
+npm run seed:admin -- --email ops@example.com --password "<strong-password>" --phone "+919800000001"
+npm run dev             # http://localhost:4000
+
+cd ../dashboard
+cp .env.example .env    # VITE_API_URL=http://localhost:4000/api/v1
+npm install
+npm run dev             # http://localhost:5174
 ```
 
 ---
@@ -178,8 +243,9 @@ npm run dev             # http://localhost:3000
 - Sensitive data stays encrypted on-device; nothing is shared without your action.
 - Delivery status is always truthful: the app distinguishes preparing an alert from actually
   sending it.
-- **Accounts are device-local for now** (no backend yet). Passwords are stored hashed; your
-  data never leaves your device until a synced backend ships.
+- **Accounts are backed by the API now.** Passwords are hashed, access tokens are short-lived,
+  refresh tokens are rotated and stored hashed, and guardian access requires a verified
+  consent link. Administrator access is provisioned explicitly and never inherited.
 
 ---
 
@@ -187,6 +253,8 @@ npm run dev             # http://localhost:3000
 
 - **[PLAN.md](PLAN.md)** — architecture, roadmap, milestones, risks, open questions
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — architecture diagrams
+- **[backend/README.md](backend/README.md)** — API endpoints, auth model, env vars
+- **[dashboard/README.md](dashboard/README.md)** — command center setup, roles, module map
 
 ---
 

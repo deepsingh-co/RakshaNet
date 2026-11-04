@@ -224,6 +224,15 @@ describe('dashboard analytics and notification APIs', () => {
     expect(own.text).not.toContain('csv-hidden-b');
     expect(own.text).toContain('incident_id,client_incident_id');
 
+    // Browser clients must be able to read the export metadata headers,
+    // otherwise the dashboard would report every export as zero rows.
+    const exposed = await request(app)
+      .get('/api/v1/analytics/incidents.csv')
+      .set(auth(userA.token))
+      .set('Origin', 'http://localhost:5174');
+    expect(exposed.headers['access-control-expose-headers']).toContain('X-Export-Rows');
+    expect(exposed.headers['x-export-rows']).toBe('1');
+
     const all = await request(app)
       .get('/api/v1/analytics/incidents.csv')
       .set(auth(admin.token));
