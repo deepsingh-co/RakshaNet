@@ -1,4 +1,4 @@
-import { Schema, model, models, type Model, type InferSchemaType, type Types } from 'mongoose';
+import mongoose, { Schema, model, type Model, type InferSchemaType, type Types } from 'mongoose';
 
 /**
  * Roles are strictly hierarchical in *permissions*, never inherited by
@@ -60,4 +60,4 @@ userSchema.index({ createdAt: -1 });
 userSchema.index({ role: 1, status: 1 });
 
 export type UserDoc = InferSchemaType<typeof userSchema> & { _id: Types.ObjectId };
-export const User = (models.User as Model<InferSchemaType<typeof userSchema>>) ?? model('User', userSchema);
+export const User = (mongoose.models.User as Model<InferSchemaType<typeof userSchema>>) ?? model('User', userSchema);

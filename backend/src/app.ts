@@ -8,6 +8,8 @@ import { authRouter } from './routes/auth.js';
 import { contactsRouter } from './routes/contacts.js';
 import { usersRouter } from './routes/users.js';
 import { guardianRouter } from './routes/guardian.js';
+import { incidentsRouter } from './routes/incidents.js';
+import { notificationWebhookHandler } from './routes/notificationWebhook.js';
 import { errorHandler, notFound } from './middleware/error.js';
 
 export function createApp() {
@@ -25,6 +27,14 @@ export function createApp() {
       credentials: true,
     }),
   );
+  // Provider webhooks must see the exact raw body for HMAC verification, so
+  // this route is mounted before the JSON parser.
+  app.post(
+    '/api/v1/notifications/webhook',
+    express.raw({ type: 'application/json', limit: '64kb' }),
+    notificationWebhookHandler,
+  );
+
   app.use(express.json({ limit: '256kb' }));
   app.use(cookieParser());
 
@@ -33,6 +43,7 @@ export function createApp() {
   app.use('/api/v1/contacts', contactsRouter);
   app.use('/api/v1/users', usersRouter);
   app.use('/api/v1/guardian', guardianRouter);
+  app.use('/api/v1/incidents', incidentsRouter);
 
   app.get('/api/v1/health', (_req, res) => {
     res.json({

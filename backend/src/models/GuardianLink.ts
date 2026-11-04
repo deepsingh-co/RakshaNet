@@ -1,4 +1,4 @@
-import { Schema, model, models, type Model, type InferSchemaType, type Types } from 'mongoose';
+import mongoose, { Schema, model, type Model, type InferSchemaType, type Types } from 'mongoose';
 
 /**
  * Explicit, consent-based guardian ↔ child relationship.
@@ -32,5 +32,5 @@ export type GuardianLinkDoc = InferSchemaType<typeof guardianLinkSchema> & {
   _id: Types.ObjectId;
 };
 export const GuardianLink =
-  (models.GuardianLink as Model<InferSchemaType<typeof guardianLinkSchema>>) ??
+  (mongoose.models.GuardianLink as Model<InferSchemaType<typeof guardianLinkSchema>>) ??
   model('GuardianLink', guardianLinkSchema);

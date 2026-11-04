@@ -2,12 +2,14 @@ import http from 'node:http';
 import { createApp } from './app.js';
 import { env } from './config/env.js';
 import { connectDb } from './db/connect.js';
+import { startEscalationSweeper } from './services/escalation.js';
 
 async function main(): Promise<void> {
   await connectDb();
 
   const app = createApp();
   const server = http.createServer(app);
+  const stopSweeper = startEscalationSweeper();
 
   server.listen(env.PORT, () => {
     // eslint-disable-next-line no-console
@@ -17,6 +19,7 @@ async function main(): Promise<void> {
   const shutdown = (signal: string) => {
     // eslint-disable-next-line no-console
     console.log(`[api] ${signal} received — shutting down`);
+    stopSweeper();
     server.close(() => process.exit(0));
     setTimeout(() => process.exit(1), 10_000).unref();
   };

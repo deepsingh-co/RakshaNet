@@ -1,4 +1,4 @@
-import { Schema, model, models, type Model, type InferSchemaType, type Types } from 'mongoose';
+import mongoose, { Schema, model, type Model, type InferSchemaType, type Types } from 'mongoose';
 
 /**
  * Refresh tokens are stored HASHED and are rotated on every use.
@@ -24,5 +24,5 @@ refreshTokenSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 export type RefreshTokenDoc = InferSchemaType<typeof refreshTokenSchema> & { _id: Types.ObjectId };
 export const RefreshToken =
-  (models.RefreshToken as Model<InferSchemaType<typeof refreshTokenSchema>>) ??
+  (mongoose.models.RefreshToken as Model<InferSchemaType<typeof refreshTokenSchema>>) ??
   model('RefreshToken', refreshTokenSchema);

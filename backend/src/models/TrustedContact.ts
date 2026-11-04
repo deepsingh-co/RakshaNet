@@ -1,4 +1,4 @@
-import { Schema, model, models, type Model, type InferSchemaType, type Types } from 'mongoose';
+import mongoose, { Schema, model, type Model, type InferSchemaType, type Types } from 'mongoose';
 
 /**
  * A trusted contact belongs to exactly one user. Only VERIFIED contacts
@@ -59,7 +59,7 @@ contactSchema.index({ userId: 1, isPrimary: -1, createdAt: 1 });
 
 export type TrustedContactDoc = InferSchemaType<typeof contactSchema> & { _id: Types.ObjectId };
 export const TrustedContact =
-  (models.TrustedContact as Model<InferSchemaType<typeof contactSchema>>) ??
+  (mongoose.models.TrustedContact as Model<InferSchemaType<typeof contactSchema>>) ??
   model('TrustedContact', contactSchema);
 
 /** +919876543210 -> +9198****3210 — never show full numbers in lists. */

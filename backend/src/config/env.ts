@@ -25,10 +25,24 @@ const schema = z.object({
 
   SMS_PROVIDER: z.string().optional().default(''),
   SMS_API_KEY: z.string().optional().default(''),
+  SMS_API_URL: z.string().optional().default(''),
+  SMS_FROM: z.string().optional().default(''),
   WHATSAPP_PROVIDER: z.string().optional().default(''),
   WHATSAPP_API_KEY: z.string().optional().default(''),
+  WHATSAPP_API_URL: z.string().optional().default(''),
   PUSH_PROVIDER: z.string().optional().default(''),
   PUSH_API_KEY: z.string().optional().default(''),
+  PUSH_API_URL: z.string().optional().default(''),
+
+  /** console = explicit dev simulation, live = call configured providers. */
+  NOTIFICATION_MODE: z.enum(['console', 'live']).optional(),
+  /** HMAC secret for provider delivery webhooks. */
+  NOTIFICATION_WEBHOOK_SECRET: z.string().optional().default(''),
+
+  /** Escalate untouched alerts after this many seconds. */
+  ESCALATION_AFTER_SECONDS: z.coerce.number().int().positive().default(120),
+  /** A location captured longer ago than this is stored as stale. */
+  LOCATION_STALE_AFTER_SECONDS: z.coerce.number().int().positive().default(120),
 
   OTP_MODE: z.enum(['console', 'provider']).default('console'),
 });
@@ -40,13 +54,18 @@ if (!parsed.success) {
   process.exit(1);
 }
 
+const isProd = parsed.data.NODE_ENV === 'production';
+const isTest = parsed.data.NODE_ENV === 'test';
+
 export const env = {
   ...parsed.data,
   corsOrigins: parsed.data.CORS_ORIGINS.split(',')
     .map((s) => s.trim())
     .filter(Boolean),
-  isProd: parsed.data.NODE_ENV === 'production',
-  isTest: parsed.data.NODE_ENV === 'test',
+  isProd,
+  isTest,
+  /** Dev/test default is a clearly-labelled simulation, not a silent fake send. */
+  notificationMode: parsed.data.NOTIFICATION_MODE ?? (isProd ? 'live' : 'console'),
 };
 
 export type Env = typeof env;
