@@ -6,8 +6,7 @@ import {
   Eye, EyeOff, AlertTriangle, CheckCircle2, Radio, Lock,
 } from "lucide-react";
 import { Card, Pill } from "../ui";
-import { api } from "../api/client";
-import { sosApi } from "../api/endpoints";
+import { isLocalMode, sosApi, voiceCodeApi } from "../api/endpoints";
 
 // Web Speech API types
 declare global {
@@ -27,6 +26,7 @@ export default function VoiceCodeWeb() {
   const [showPhrase, setShowPhrase] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
   const [statusMsg, setStatusMsg] = useState("");
+  const [pendingSos, setPendingSos] = useState(false);
 
   // ── Listening / Armed State ───────────────────────────────────────
   const [armed, setArmed] = useState(false);
@@ -45,7 +45,7 @@ export default function VoiceCodeWeb() {
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await api.get("/api/v1/voice-code");
+        const data = await voiceCodeApi.get();
         if (data.active) {
           setHasPhrase(true);
           setSavedHint(data.hint);
@@ -63,7 +63,7 @@ export default function VoiceCodeWeb() {
     }
     setStatus("saving");
     try {
-      const { data } = await api.post("/api/v1/voice-code", { phrase: phrase.trim() });
+      const data = await voiceCodeApi.save(phrase.trim());
       setSavedHint(data.hint);
       setHasPhrase(true);
       setPhrase("");
@@ -79,7 +79,7 @@ export default function VoiceCodeWeb() {
   // ── Delete phrase ─────────────────────────────────────────────────
   const deletePhrase = async () => {
     try {
-      await api.delete("/api/v1/voice-code");
+      await voiceCodeApi.remove();
       setHasPhrase(false);
       setSavedHint("");
       setArmed(false);
@@ -146,28 +146,18 @@ export default function VoiceCodeWeb() {
             lastCheckedRef.current = candidate;
             
             try {
-              const { data } = await api.post("/api/v1/voice-code/verify", { spoken: candidate });
+              const data = await voiceCodeApi.verify(candidate);
               if (data.match) {
-                // 🚨 SILENT SOS TRIGGER — no visible confirmation!
-                setStatus("triggered");
+                // A matched duress phrase stops listening and asks for an
+                // explicit confirmation. RakshaNet never lets an automated
+                // matcher create an incident on its own.
+                setArmed(false);
                 stopListening();
-                try {
-                  navigator.geolocation.getCurrentPosition(async (pos) => {
-                    await sosApi.trigger({
-                      triggerType: "VOICE",
-                      latitude: pos.coords.latitude,
-                      longitude: pos.coords.longitude,
-                      areaName: "Voice Secret Code Triggered",
-                    });
-                  }, async () => {
-                    await sosApi.trigger({
-                      triggerType: "VOICE",
-                      latitude: 0,
-                      longitude: 0,
-                      areaName: "Voice Secret Code Triggered",
-                    });
-                  });
-                } catch { /* silent */ }
+                setStatus("triggered");
+                setPendingSos(true);
+                setStatusMsg(
+                  "Duress phrase recognised. SOS was not sent automatically — confirm below.",
+                );
               }
             } catch { /* network error — ignore silently */ }
           }
@@ -227,6 +217,40 @@ export default function VoiceCodeWeb() {
     };
   }, []);
 
+  const sendSos = async () => {
+    setPendingSos(false);
+    const send = async (latitude: number, longitude: number) => {
+      await sosApi.trigger({
+        triggerType: "VOICE",
+        latitude,
+        longitude,
+        areaName: "Voice Secret Code Triggered",
+      });
+    };
+    try {
+      await new Promise<void>((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+          async (pos) => {
+            await send(pos.coords.latitude, pos.coords.longitude);
+            resolve();
+          },
+          async () => {
+            await send(0, 0);
+            resolve();
+          },
+          { enableHighAccuracy: true, timeout: 6000 },
+        );
+      });
+      setStatusMsg(
+        isLocalMode
+          ? "SOS recorded on this device. Local mode does not call or message anyone."
+          : "SOS sent to the RakshaNet command center.",
+      );
+    } catch {
+      setStatusMsg("Could not record the SOS. Use the main SOS screen instead.");
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -238,7 +262,7 @@ export default function VoiceCodeWeb() {
           <div className="text-[11px] uppercase tracking-[0.3em] text-pink-300">Stealth Trigger</div>
           <h1 className="text-3xl font-black">Voice Secret Code</h1>
           <p className="text-slate-400 text-sm mt-1">
-            Say "Call Mom" — Vasudra silently triggers SOS. Attacker never knows.
+            Say your decoy phrase — the app recognises it and asks you to confirm SOS.
           </p>
         </div>
       </div>
@@ -256,6 +280,36 @@ export default function VoiceCodeWeb() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {pendingSos && (
+        <div className="rounded-2xl border border-red-400/40 bg-red-500/10 p-4">
+          <div className="flex items-center gap-2 text-sm font-bold text-red-200">
+            <AlertTriangle className="w-4 h-4" />
+            Duress phrase matched — confirm before anything is sent
+          </div>
+          <p className="mt-1 text-xs text-red-100/80">
+            Nothing has been sent yet. Confirming records an SOS with your current
+            location. In local mode this stays on this device.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              onClick={() => void sendSos()}
+              className="rounded-xl bg-red-500 px-4 py-2 text-sm font-bold text-white hover:bg-red-400"
+            >
+              Send SOS now
+            </button>
+            <button
+              onClick={() => {
+                setPendingSos(false);
+                setStatusMsg("Cancelled. No SOS was sent.");
+              }}
+              className="rounded-xl bg-white/10 px-4 py-2 text-sm font-semibold hover:bg-white/15"
+            >
+              I'm safe — cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-5">

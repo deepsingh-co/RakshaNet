@@ -29,7 +29,6 @@ const THERAPISTS = [
   { name: "Dr. Sneha Reddy", spec: "EMDR Therapy", avail: "Tomorrow", rating: 4.9 },
 ];
 import { aiServicesApi } from "../api/endpoints";
-import { isBackendAvailable } from "../api/client";
 
 export default function TraumaWeb() {
   const [mood, setMood] = useState<number | null>(null);
@@ -48,8 +47,6 @@ export default function TraumaWeb() {
 
   useEffect(() => {
     const fetchTherapists = async () => {
-      // The AI service is not configured in RakshaNet; keep the local demo list.
-      if (!isBackendAvailable()) return;
       try {
         const data = await aiServicesApi.getTherapists("Delhi");
         if (data.therapists && data.therapists.length > 0) {

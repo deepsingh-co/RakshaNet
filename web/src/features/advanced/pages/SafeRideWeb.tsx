@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, Camera, ShieldCheck, Car, Navigation, CheckCircle2, AlertTriangle, Play, MapPin, Upload } from "lucide-react";
 import { Card } from "../ui";
-import { api } from "../api/client";
+import { isLocalMode, safeRideApi } from "../api/endpoints";
 
 export default function SafeRideWeb() {
   const [step, setStep] = useState(1);
@@ -16,6 +16,7 @@ export default function SafeRideWeb() {
   const [driverMobile, setDriverMobile] = useState("");
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
+  const [devOtp, setDevOtp] = useState("");
   const [driverVerified, setDriverVerified] = useState(false);
   const [source, setSource] = useState("");
   const [destination, setDestination] = useState("");
@@ -23,14 +24,16 @@ export default function SafeRideWeb() {
   const [activeRide, setActiveRide] = useState<any>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const locationTimer = useRef<number | null>(null);
 
   // Check for active ride on mount
   useEffect(() => {
-    api.get("/api/v1/safe-ride/active").then(res => {
-      if (res.data && res.data.id) {
-        setActiveRide(res.data);
-      }
+    safeRideApi.active().then((ride) => {
+      if (ride) setActiveRide(ride);
     }).catch(() => {});
+    return () => {
+      if (locationTimer.current) window.clearInterval(locationTimer.current);
+    };
   }, []);
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,10 +54,11 @@ export default function SafeRideWeb() {
     setError("");
     try {
       const formattedNumber = driverMobile.startsWith("+") ? driverMobile : `+91${driverMobile}`;
-      await api.post("/api/v1/safe-ride/driver-otp/send", { mobile: formattedNumber });
+      const data = await safeRideApi.sendOtp(formattedNumber);
       setOtpSent(true);
+      setDevOtp(data.devOtp ?? "");
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Failed to send OTP. Please try again.");
+      setError(err?.response?.data?.message || err?.message || "Failed to send OTP. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -66,10 +70,7 @@ export default function SafeRideWeb() {
     setError("");
     try {
       const formattedNumber = driverMobile.startsWith("+") ? driverMobile : `+91${driverMobile}`;
-      const { data } = await api.post("/api/v1/safe-ride/driver-otp/verify", {
-        mobile: formattedNumber,
-        otp,
-      });
+      const data = await safeRideApi.verifyOtp(formattedNumber, otp);
       if (data.verified) {
         setDriverVerified(true);
         setError("");
@@ -100,10 +101,9 @@ export default function SafeRideWeb() {
         sourceLocation: source,
         destinationLocation: destination
       };
-      const { data } = await api.post("/api/v1/safe-ride/start", payload);
+      const data = await safeRideApi.start(payload);
       setActiveRide(data);
-      // Start mock location tracking locally
-      startMockLocationUpdates(data.id);
+      startLocationUpdates(data.id);
     } catch {
       setError("Failed to start journey.");
     } finally {
@@ -111,17 +111,34 @@ export default function SafeRideWeb() {
     }
   };
 
-  const startMockLocationUpdates = (rideId: string) => {
-    // In a real app, use navigator.geolocation.watchPosition
-    setInterval(() => {
-      api.post(`/api/v1/safe-ride/${rideId}/location`, { location: "28.7041,77.1025" }).catch(()=>{});
-    }, 30000); // every 30 seconds
+  const startLocationUpdates = (rideId: string) => {
+    if (locationTimer.current) window.clearInterval(locationTimer.current);
+    const push = () => {
+      navigator.geolocation?.getCurrentPosition(
+        (pos) => {
+          void safeRideApi.addLocation(
+            rideId,
+            `${pos.coords.latitude.toFixed(5)},${pos.coords.longitude.toFixed(5)}`,
+          );
+        },
+        () => {
+          void safeRideApi.addLocation(rideId, "location-unavailable");
+        },
+        { enableHighAccuracy: true, timeout: 8000 },
+      );
+    };
+    push();
+    locationTimer.current = window.setInterval(push, 30000);
   };
 
   const endJourney = async () => {
     if (!activeRide) return;
     try {
-      await api.post(`/api/v1/safe-ride/${activeRide.id}/end`);
+      await safeRideApi.end(activeRide.id);
+      if (locationTimer.current) {
+        window.clearInterval(locationTimer.current);
+        locationTimer.current = null;
+      }
       setActiveRide(null);
       setStep(1);
       // Reset form
@@ -272,10 +289,19 @@ export default function SafeRideWeb() {
                         {loading ? "Sending..." : "Send OTP"}
                       </button>
                     ) : (
-                      <span className="text-xs text-emerald-400">OTP Sent via SMS</span>
+                      <span className="text-xs text-emerald-400">
+                        {isLocalMode ? "OTP generated on this device" : "OTP Sent via SMS"}
+                      </span>
                     )}
                   </div>
-                  
+
+                  {otpSent && devOtp && (
+                    <div className="rounded-lg border border-amber-400/25 bg-amber-400/10 px-3 py-2 text-xs text-amber-100">
+                      Local mode has no SMS provider. Your verification code is{" "}
+                      <span className="font-mono text-base font-bold tracking-widest">{devOtp}</span>
+                    </div>
+                  )}
+
                   {otpSent && (
                     <div className="flex gap-2">
                       <input 

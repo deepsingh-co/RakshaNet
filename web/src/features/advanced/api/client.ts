@@ -22,6 +22,7 @@ const FEATURES_API = (import.meta.env.VITE_FEATURES_API_URL as string | undefine
 const FEATURES_AI = (import.meta.env.VITE_FEATURES_AI_URL as string | undefined)?.trim();
 
 export const isFeaturesBackendConfigured = Boolean(FEATURES_API);
+export const isFeaturesAiConfigured = Boolean(FEATURES_AI);
 
 export const api = axios.create({
   baseURL: FEATURES_API || '',

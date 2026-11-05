@@ -7,7 +7,6 @@ import {
 } from "lucide-react";
 import { Card, Pill } from "../ui";
 import { blockchainApi, EvidenceBlockDTO } from "../api/endpoints";
-import { isBackendAvailable } from "../api/client";
 
 export default function BlockchainWeb() {
   const [chain, setChain] = useState<EvidenceBlockDTO[]>([]);
@@ -19,8 +18,6 @@ export default function BlockchainWeb() {
   }, []);
 
   const loadChain = async () => {
-    // No blockchain service is part of RakshaNet; don't log a fake failure.
-    if (!isBackendAvailable()) return;
     try {
       const data = await blockchainApi.getChain();
       setChain(data);

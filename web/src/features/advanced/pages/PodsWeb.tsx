@@ -7,7 +7,6 @@ import {
 } from "lucide-react";
 import { Card, Pill } from "../ui";
 import { podsApi } from "../api/endpoints";
-import { isBackendAvailable } from "../api/client";
 import { useAuthStore } from "../store/authStore";
 
 interface Pod {
@@ -46,19 +45,6 @@ export default function PodsWeb() {
   const speakingRef = useRef(false);
 
   const fetchPods = useCallback(async () => {
-    // No pods service is part of RakshaNet. Use the local demo pods quietly
-    // instead of polling a missing endpoint and filling the console.
-    if (!isBackendAvailable()) {
-      if (pods.length === 0) {
-        setPods([
-          { id: "1", name: "Late Night Cab (Fallback)", members: 4, active: true, code: "ABC123", createdAt: "2 hours ago" },
-          { id: "2", name: "College Friends (Fallback)", members: 6, active: false, code: "XYZ789", createdAt: "Yesterday" },
-        ]);
-        activePodRef.current = "1";
-        setActivePod("1");
-      }
-      return;
-    }
     try {
       const data = await podsApi.list(userName);
       const formatted = data.map((p: any) => ({
@@ -134,9 +120,7 @@ export default function PodsWeb() {
 
   useEffect(() => {
     fetchPods(); // Initial load
-    // Only poll when a real pods service is configured.
-    if (!isBackendAvailable()) return;
-    const interval = setInterval(fetchPods, 3000); // Poll for cross-user SOS detection
+    const interval = setInterval(fetchPods, 3000); // Poll for cross-tab pod SOS
     return () => clearInterval(interval);
   }, [fetchPods]);
 
