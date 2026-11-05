@@ -460,7 +460,13 @@ export const localBlockchain = {
     let prevHash = '0'.repeat(64);
     for (const block of evidence) {
       if (block.prevHash !== prevHash) return false;
-      const expected = await blockHash(block);
+      const expected = await blockHash(block as {
+        blockIndex: number;
+        timestamp: string;
+        type: string;
+        description: string;
+        prevHash: string;
+      });
       if (expected !== block.hash) return false;
       prevHash = block.hash;
     }

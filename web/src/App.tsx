@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { HashRouter, Link, NavLink, Navigate, Route, Routes } from 'react-router-dom';
+import { WomenEmpowermentPortal } from './portal/WomenEmpowermentPortal';
 import { SosScreen } from './features/sos/SosScreen';
 import { ContactsScreen } from './features/contacts/ContactsScreen';
 import { HistoryScreen } from './features/history/HistoryScreen';
@@ -56,12 +57,16 @@ export default function App() {
   return (
     <HashRouter>
       <Routes>
+        {/* Main Comprehensive Women Empowerment & Safety Portal matching reference */}
+        <Route path="/" element={<WomenEmpowermentPortal />} />
+        <Route path="/portal/*" element={<WomenEmpowermentPortal />} />
+
         {/* Public static pages — no login required. */}
         <Route path="/about" element={<AboutPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/contact" element={<ContactPage />} />
 
-        {/* Auth screens are standalone — no shell, no nav, one clear task. */}
+        {/* Auth screens */}
         <Route path="/login" element={<LoginScreen />} />
         <Route path="/signup" element={<SignupScreen />} />
 
@@ -95,15 +100,26 @@ export default function App() {
           <Route path="*" element={<Navigate to="/features" replace />} />
         </Route>
 
-        {/* Everything else requires a signed-in user. */}
+        {/* Field Offline SOS Mode */}
         <Route
-          path="/*"
+          path="/offline-sos/*"
           element={
             <RequireAuth>
               <AppShell />
             </RequireAuth>
           }
         />
+        <Route
+          path="/sos/*"
+          element={
+            <RequireAuth>
+              <AppShell />
+            </RequireAuth>
+          }
+        />
+
+        {/* Fallback to portal */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </HashRouter>
   );
