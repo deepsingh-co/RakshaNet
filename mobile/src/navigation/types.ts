@@ -24,6 +24,7 @@ export type RootStackParamList = {
   VerifyContact: { contactId: string; contactName: string; devCode?: string };
   Guardians: undefined;
   CreateChild: undefined;
+  Assistant: undefined;
 };
 
 export type RootStackScreen<T extends keyof RootStackParamList> = {

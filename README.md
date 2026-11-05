@@ -118,6 +118,19 @@ npm start               # Expo Go / emulator
 See **[mobile/README.md](mobile/README.md)** for API URL guidance per device,
 the offline outbox model, test commands, and known limitations.
 
+### Safety advisor (`backend/src/services/ai.ts`)
+A Gnani-ready guidance adapter at `POST /api/v1/ai/interpret`. It classifies a
+Hinglish/English message into a safety intent and severity, returns Hinglish
+guidance, and asks the app to confirm any real action. It never creates an
+incident and never dispatches emergency services. `GET /api/v1/ai/status`
+reports provider truth without exposing secrets.
+
+With no Gnani credentials, `AI_MODE=console` uses a deterministic local
+classifier and labels the response `simulated`. In `AI_MODE=live`, a missing
+credential, timeout, bad response, or provider error falls back locally with
+`degraded: true` and a safe error code. The live Gnani contract is **not
+verified** yet. There is no speech-to-text or text-to-speech integration.
+
 ---
 
 ## Features
@@ -197,6 +210,7 @@ the offline outbox model, test commands, and known limitations.
 | Dashboard UI | React 18, Vite, TypeScript, React Router 6 |
 | Map | Leaflet 1.9 + OpenStreetMap tiles |
 | Charts | Inline SVG (no chart dependency) |
+| AI | Gnani adapter + deterministic console fallback (text only) |
 
 ### Mobile App (built)
 | Layer | Technology |
@@ -206,7 +220,6 @@ the offline outbox model, test commands, and known limitations.
 | Offline storage | AsyncStorage (device records + outbox), Expo SecureStore (refresh token) |
 | Device APIs | expo-location, expo-network, expo-device, expo-battery, expo-haptics |
 | Tests | Vitest |
-
 ### Planned — Android
 | Component | Technology |
 |---|---|
@@ -236,7 +249,8 @@ checklists, and risk register.
 | 2 | **Backend API** (auth/RBAC, contacts, guardian links, incidents, locations, notifications, realtime, audit, analytics) | ✅ Built |
 | 2b | **Web Command Center** (11 role-aware operations modules) | ✅ Built |
 | 2c | **Mobile app** (Expo, offline SOS/report outbox, contacts, guardians, settings) | ✅ Built |
-| 3 | Gnani AI voice integration, final end-to-end integration | In progress |
+| 2d | **Safety advisor** (Gnani adapter, console fallback, honest provider status) | ✅ Built (live unverified) |
+| 3 | Gnani live credentials, voice input, final end-to-end hardening | In progress |
 | 4 | Wear OS companion, WhatsApp Business API, nearby relay, multi-language | Not started |
 
 ---

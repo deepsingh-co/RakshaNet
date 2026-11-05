@@ -69,6 +69,7 @@ become verified, and either party can revoke the link.
 | Alerts | Incident list + filters | Active/all queues, local-only and pending-sync records kept visible |
 | Incident detail | Live or local record | Timeline, delivery truth, location, notes, owner/guardian actions |
 | Report | Hinglish templates + free text | Severity, optional location, creates a local record first |
+| Safety assistant | Hinglish guidance | Calls the backend AI adapter, labels console/degraded answers honestly, keeps every action user-confirmed |
 | People | Person hub | Entry points for contacts and guardian links |
 | Contacts | Trusted contacts | Add, verify, make primary, remove; phone changes reset verification |
 | Guardians | Guardian links | Invite, consent, create child account, revoke; scoped safety access only |
@@ -130,6 +131,9 @@ verified contact could be alerted; the app does not imply help is on the way.
     request (sessions revoked, signed out).
   - Location permission denied -> honest "Location unavailable" message; the
     alert still completes.
+  - Safety assistant in console mode: a Hinglish SOS returned `Immediate
+    danger` / `Critical`, a `Call 112` action, and an explicit **Console
+    guidance · simulated** badge; no incident was created automatically.
 - Offline E2E: rejected `/api/v1` fetches and forced `navigator.onLine = false`.
   The report showed `Local only` / `Pending sync` / original device time. After
   restoring the network it synced automatically, then showed `Offline honesty`,
@@ -140,6 +144,12 @@ verified contact could be alerted; the app does not imply help is on the way.
 
 - **Native builds were not executed.** Verification ran on Expo web. iOS and
   Android builds, store signing, and physical-device behavior are unverified.
+- **No voice pipeline.** The Safety assistant accepts typed text only. There is
+  no speech-to-text, text-to-speech, wake word, or audio upload.
+- **Gnani live mode is not verified.** With no credentials configured, the app
+  receives the backend's deterministic console guidance and labels it
+  `simulated`. The Gnani request contract has not been validated against the
+  vendor.
 - **Notification delivery is simulated in development.** No SMS, WhatsApp, or
   push provider is configured, so the app honestly shows console-mode
   simulations and `0 delivered`. There is no push-notification integration or

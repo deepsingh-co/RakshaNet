@@ -247,6 +247,24 @@ export function HomeScreen() {
         )}
       </Card>
 
+      <Pressable
+        onPress={() => navigation.navigate('Assistant')}
+        accessibilityRole="button"
+        accessibilityLabel="Safety assistant. Get Hinglish guidance without automatic dispatch."
+        style={({ pressed }) => [styles.assistantCard, pressed && { opacity: 0.85 }]}
+      >
+        <View style={styles.assistantIcon}>
+          <Ionicons name="sparkles-outline" size={22} color={colors.purple} />
+        </View>
+        <View style={styles.flex}>
+          <Text style={styles.assistantTitle}>Safety assistant</Text>
+          <Text style={styles.assistantCaption}>
+            Hinglish guidance · you confirm every action
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={20} color={colors.muted} />
+      </Pressable>
+
       <View style={styles.quickGrid}>
         <QuickAction
           icon="megaphone-outline"
@@ -504,6 +522,27 @@ const styles = StyleSheet.create({
   sosSavingText: { fontSize: 12.5, color: colors.inkSoft, fontWeight: '600' },
 
   quickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
+  assistantCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: spacing.md,
+    minHeight: 68,
+  },
+  assistantIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    backgroundColor: colors.purpleSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  assistantTitle: { fontSize: 14.5, fontWeight: '700', color: colors.ink },
+  assistantCaption: { fontSize: 11.5, lineHeight: 16, color: colors.muted, marginTop: 1 },
   quickAction: {
     width: '47.5%',
     flexGrow: 1,

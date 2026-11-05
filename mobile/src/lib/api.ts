@@ -11,6 +11,7 @@ import type {
   IncidentSyncResponse,
   LocationInput,
   PublicUser,
+  SafetyInterpretResponse,
   TrustedContact,
 } from '../types';
 
@@ -406,4 +407,15 @@ export function createChildAccount(input: {
   linkStatus: string;
 }> {
   return apiRequest('/guardian/children', { method: 'POST', body: input });
+}
+
+/* ------------------------------------------------------------------ */
+/* Safety advisor                                                     */
+/* ------------------------------------------------------------------ */
+
+export function interpretSafetyMessage(input: {
+  text: string;
+  language?: 'auto' | 'en' | 'hi' | 'hinglish';
+}): Promise<SafetyInterpretResponse> {
+  return apiRequest('/ai/interpret', { method: 'POST', body: input });
 }

@@ -6,6 +6,7 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { colors, spacing } from '../theme';
 import { useAuth } from '../context/AuthContext';
 import { AlertsScreen } from '../screens/AlertsScreen';
+import { AssistantScreen } from '../screens/AssistantScreen';
 import { ContactsScreen } from '../screens/ContactsScreen';
 import { ContactFormScreen } from '../screens/ContactFormScreen';
 import { CreateChildScreen } from '../screens/CreateChildScreen';
@@ -95,6 +96,7 @@ export function RootNavigator() {
           <Stack.Screen name="VerifyContact" component={VerifyContactScreen} />
           <Stack.Screen name="Guardians" component={GuardiansScreen} />
           <Stack.Screen name="CreateChild" component={CreateChildScreen} />
+          <Stack.Screen name="Assistant" component={AssistantScreen} />
         </>
       ) : (
         <>

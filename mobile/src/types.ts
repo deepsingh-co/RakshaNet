@@ -285,3 +285,56 @@ export const RELATIONSHIPS = [
 ] as const;
 
 export type Relationship = (typeof RELATIONSHIPS)[number];
+
+/* ------------------------------------------------------------------ */
+/* Safety advisor (backend Gnani adapter)                              */
+/* ------------------------------------------------------------------ */
+
+export type SafetyIntent =
+  | 'SOS'
+  | 'FOLLOWED'
+  | 'HARASSMENT'
+  | 'UNSAFE_CAB'
+  | 'ACCIDENT'
+  | 'HOME_UNSAFE'
+  | 'CHILD_UNSAFE'
+  | 'NEEDS_HELP'
+  | 'INFO'
+  | 'UNKNOWN';
+
+export type SuggestedAction =
+  | 'CALL_112'
+  | 'HOLD_SOS'
+  | 'MOVE_TO_SAFE_PLACE'
+  | 'SHARE_LOCATION'
+  | 'ALERT_TRUSTED_CONTACTS'
+  | 'CONFIRM_DETAILS'
+  | 'PROVIDE_INFO';
+
+export interface SafetyInterpretation {
+  intent: SafetyIntent;
+  severity: IncidentSeverity;
+  confidence: number;
+  reply: string;
+  suggestedAction: SuggestedAction;
+  requiresConfirmation: boolean;
+  language: string;
+  provider: string;
+  mode: 'console' | 'live';
+  simulated: boolean;
+  degraded: boolean;
+  providerError?: string;
+  at: string;
+}
+
+export interface SafetyInterpretResponse {
+  interpretation: SafetyInterpretation;
+  honesty: {
+    autoDispatch: boolean;
+    autoIncidentCreation: boolean;
+    requiresConfirmation: boolean;
+    simulated: boolean;
+    degraded: boolean;
+    note: string;
+  };
+}
