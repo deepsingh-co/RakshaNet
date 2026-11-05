@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   HeartPulse,
   Search,
@@ -8,11 +8,8 @@ import {
   Video,
   FileText,
   Upload,
-  CheckCircle,
   Shield,
   Star,
-  Lock,
-  Plus,
   X,
 } from 'lucide-react';
 import { usePortalStore } from '../store/portalStore';
@@ -143,20 +140,33 @@ export function HealthMedicalPage() {
       {/* 1. Doctor Directory Tab */}
       {activeTab === 'doctors' && (
         <div className="space-y-6">
-          <div className="flex flex-wrap gap-2">
-            {SPECIALTIES.map((spec) => (
-              <button
-                key={spec}
-                onClick={() => setSelectedSpecialty(spec)}
-                className={`rounded-xl px-4 py-2 text-xs font-bold transition ${
-                  selectedSpecialty === spec
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                    : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300'
-                }`}
-              >
-                {spec}
-              </button>
-            ))}
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
+            <div className="flex flex-wrap gap-2">
+              {SPECIALTIES.map((spec) => (
+                <button
+                  key={spec}
+                  onClick={() => setSelectedSpecialty(spec)}
+                  className={`rounded-xl px-4 py-2 text-xs font-bold transition ${
+                    selectedSpecialty === spec
+                      ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                      : 'border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300'
+                  }`}
+                >
+                  {spec}
+                </button>
+              ))}
+            </div>
+
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-3 top-2.5 size-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search doctors, hospital..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-white py-1.5 pl-9 pr-3 text-xs outline-none focus:border-blue-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">

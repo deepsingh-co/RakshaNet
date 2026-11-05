@@ -1,10 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Briefcase,
   Search,
-  Filter,
   MapPin,
-  Clock,
   Sparkles,
   FileText,
   CheckCircle,
@@ -12,8 +10,6 @@ import {
   DollarSign,
   Send,
   X,
-  AlertCircle,
-  ChevronRight,
 } from 'lucide-react';
 import { usePortalStore } from '../store/portalStore';
 import { Job } from '../types';

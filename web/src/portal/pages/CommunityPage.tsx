@@ -1,20 +1,12 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Users,
-  MessageSquare,
-  Sparkles,
   Calendar,
   ThumbsUp,
   Heart,
   Send,
   Plus,
-  Share2,
-  CheckCircle,
   X,
-  Star,
-  MapPin,
-  Clock,
-  ExternalLink,
 } from 'lucide-react';
 import { usePortalStore } from '../store/portalStore';
 import { MOCK_MENTORS } from '../data/mockData';

@@ -526,3 +526,4 @@ export const usePortalStore = create<PortalState>((set, get) => ({
     set({ auditLogs: [newLog, ...get().auditLogs.slice(0, 49)] });
   },
 }));
+

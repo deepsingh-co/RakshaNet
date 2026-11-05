@@ -1,22 +1,15 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   DollarSign,
-  TrendingUp,
-  Landmark,
-  Calculator,
-  Briefcase,
   CheckCircle,
   ExternalLink,
   ShieldCheck,
-  ChevronRight,
-  PieChart,
 } from 'lucide-react';
 import { MOCK_FINANCIAL_SCHEMES } from '../data/mockData';
-import { FinancialScheme } from '../types';
 
 export function FinancialLiteracyPage() {
   const [activeTab, setActiveTab] = useState<'schemes' | 'calculator' | 'budgeting' | 'entrepreneurship'>('schemes');
-  const [selectedProvider, setSelectedProvider] = useState<string>('All');
+  const [selectedProvider] = useState<string>('All');
 
   // Interactive Loan EMI Calculator state
   const [loanAmount, setLoanAmount] = useState<number>(200000); // 2 Lakhs default

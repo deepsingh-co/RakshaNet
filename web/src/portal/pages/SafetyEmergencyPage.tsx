@@ -1,17 +1,8 @@
 import React, { useState } from 'react';
 import {
   ShieldAlert,
-  PhoneCall,
-  MapPin,
-  AlertTriangle,
-  Send,
   CheckCircle,
-  FileText,
-  Volume2,
-  Lock,
-  ExternalLink,
   Navigation,
-  Sparkles,
 } from 'lucide-react';
 import { usePortalStore } from '../store/portalStore';
 import { MOCK_SAFE_LOCATIONS } from '../data/mockData';
@@ -245,9 +236,9 @@ export function SafetyEmergencyPage({ onOpenSos }: SafetyEmergencyPageProps) {
             )}
 
             <form onSubmit={handleIncidentSubmit} className="mt-5 space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">Incident Category</label>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">Category</label>
                   <select
                     value={incType}
                     onChange={(e) => setIncType(e.target.value as any)}
@@ -263,11 +254,21 @@ export function SafetyEmergencyPage({ onOpenSos }: SafetyEmergencyPageProps) {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">Date of Incident</label>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">Date</label>
                   <input
                     type="date"
                     value={incDate}
                     onChange={(e) => setIncDate(e.target.value)}
+                    className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 dark:text-slate-300">Time</label>
+                  <input
+                    type="time"
+                    value={incTime}
+                    onChange={(e) => setIncTime(e.target.value)}
                     className="mt-1 w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                   />
                 </div>

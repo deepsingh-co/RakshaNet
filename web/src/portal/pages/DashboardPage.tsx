@@ -1,20 +1,13 @@
-import React from 'react';
 import {
   GraduationCap,
   Briefcase,
-  Scale,
   HeartPulse,
-  Users,
   ShieldAlert,
   DollarSign,
   TrendingUp,
-  Clock,
   CheckCircle,
-  Calendar,
-  AlertTriangle,
   ArrowRight,
   Sparkles,
-  Award,
   Activity,
   Smile,
   FileText,
@@ -238,7 +231,7 @@ function BeneficiaryDashboardView({
             className="flex flex-col items-center gap-2 rounded-2xl border border-slate-100 bg-slate-50 p-4 text-center transition hover:border-indigo-200 hover:bg-indigo-50/50 dark:border-slate-800 dark:bg-slate-800/40"
           >
             <div className="rounded-xl bg-indigo-600 p-2.5 text-white">
-              <Scale className="size-5" />
+              <Activity className="size-5" />
             </div>
             <span className="text-xs font-bold text-slate-800 dark:text-slate-200">Know Rights</span>
           </button>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   GraduationCap,
   Play,
@@ -8,11 +8,7 @@ import {
   Clock,
   Star,
   Search,
-  Filter,
-  ArrowRight,
-  Sparkles,
   HelpCircle,
-  Download,
   X,
 } from 'lucide-react';
 import { usePortalStore } from '../store/portalStore';

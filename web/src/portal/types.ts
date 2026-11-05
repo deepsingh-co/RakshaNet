@@ -252,3 +252,4 @@ export interface AuditLog {
   ip: string;
   status: 'SUCCESS' | 'WARNING' | 'ALERT';
 }
+

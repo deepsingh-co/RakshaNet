@@ -5,8 +5,6 @@ import {
   CheckCircle,
   ToggleLeft,
   ToggleRight,
-  UserCheck,
-  FileText,
 } from 'lucide-react';
 import { usePortalStore } from '../store/portalStore';
 import { UserRole } from '../types';

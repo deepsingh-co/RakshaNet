@@ -1,20 +1,13 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   Scale,
-  Shield,
-  FileText,
-  Search,
-  Download,
   Copy,
   CheckCircle,
-  ExternalLink,
   ChevronDown,
   ChevronUp,
-  Clock,
-  UserCheck,
-  AlertTriangle,
   Mail,
   X,
+  Search,
 } from 'lucide-react';
 import {
   MOCK_LEGAL_RESOURCES,
@@ -52,6 +45,12 @@ export function LegalSupportPage() {
     }, 1500);
   };
 
+  const filteredLaws = MOCK_LEGAL_RESOURCES.filter(
+    (l) =>
+      l.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      l.summary.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="space-y-8 pb-16">
       {/* Header */}
@@ -68,6 +67,19 @@ export function LegalSupportPage() {
             Empowering women with statutory awareness, pro-bono advocates, case tracking, and verified legal drafts.
           </p>
         </div>
+
+        {activeTab === 'rights' && (
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-2.5 size-4 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search laws, acts, rights..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-white py-1.5 pl-9 pr-3 text-xs outline-none focus:border-indigo-500 dark:border-slate-800 dark:bg-slate-900 dark:text-white"
+            />
+          </div>
+        )}
       </div>
 
       {/* Tabs */}
@@ -119,7 +131,7 @@ export function LegalSupportPage() {
       {/* 1. Know Your Rights Tab */}
       {activeTab === 'rights' && (
         <div className="space-y-4">
-          {MOCK_LEGAL_RESOURCES.map((law) => {
+          {filteredLaws.map((law) => {
             const isExpanded = expandedLawId === law.id;
             return (
               <div

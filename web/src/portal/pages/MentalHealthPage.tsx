@@ -1,18 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
   Activity,
-  Smile,
-  Heart,
   PhoneCall,
   Calendar,
-  Clock,
-  Sparkles,
-  BookOpen,
-  Volume2,
-  VolumeX,
   Play,
   Pause,
-  CheckCircle,
   X,
 } from 'lucide-react';
 import { usePortalStore } from '../store/portalStore';
