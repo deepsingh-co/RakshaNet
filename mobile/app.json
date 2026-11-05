@@ -1,0 +1,54 @@
+{
+  "expo": {
+    "name": "SURAKSHA AI",
+    "slug": "suraksha-ai",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "suraksha",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F5F7F6"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "ai.suraksha.mobile",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "SURAKSHA AI attaches your last known location to an emergency alert and lets you share live location with trusted contacts while an incident is active.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "SURAKSHA AI attaches your last known location to an emergency alert and lets you share live location with trusted contacts while an incident is active.",
+        "NSCameraUsageDescription": "Camera access is not used in this version.",
+        "NSMicrophoneUsageDescription": "Microphone access is not used in this version."
+      }
+    },
+    "android": {
+      "package": "ai.suraksha.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#F5F7F6",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "VIBRATE"
+      ],
+      "predictiveBackGestureEnabled": false,
+      "edgeToEdgeEnabled": true
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "SURAKSHA AI uses your location to attach it to an emergency alert and share it with your trusted contacts."
+        }
+      ]
+    ]
+  }
+}

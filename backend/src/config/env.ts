@@ -16,7 +16,9 @@ const schema = z.object({
   ACCESS_TOKEN_TTL: z.string().default('15m'),
   REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().positive().default(30),
 
-  CORS_ORIGINS: z.string().default('http://localhost:5173,http://localhost:5174'),
+  CORS_ORIGINS: z
+    .string()
+    .default('http://localhost:5173,http://localhost:5174,http://localhost:8081'),
 
   GNANI_API_KEY: z.string().optional().default(''),
   GNANI_API_URL: z.string().optional().default(''),

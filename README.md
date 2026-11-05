@@ -94,6 +94,30 @@ See **[backend/README.md](backend/README.md)** and
 **[dashboard/README.md](dashboard/README.md)** for endpoints, environment
 variables, role rules, and verification details.
 
+### Mobile app (`mobile/`)
+Expo SDK 58 + React Native 0.88 + TypeScript app for the same backend. The
+interface is English; alert and report content is Hinglish. It is offline-first:
+an SOS or report is written to the device with its original device time before
+any network call, then synced in the background. Local-only, pending-sync, and
+offline-delay states stay visible after sync, and delivery is never marked
+"delivered" without a signed provider webhook.
+
+Screens: sign in / register, safety command center with hold-to-SOS, alerts,
+incident detail with timeline and delivery truth, Hinglish report composer,
+trusted contacts with OTP verification, consent-based guardian links, and
+settings (profile, phone OTP, offline queue, sessions, deletion request).
+
+```bash
+cd mobile
+cp .env.example .env    # EXPO_PUBLIC_API_URL=http://localhost:4000/api/v1
+npm install
+npm run web             # http://localhost:8081
+npm start               # Expo Go / emulator
+```
+
+See **[mobile/README.md](mobile/README.md)** for API URL guidance per device,
+the offline outbox model, test commands, and known limitations.
+
 ---
 
 ## Features
@@ -174,6 +198,15 @@ variables, role rules, and verification details.
 | Map | Leaflet 1.9 + OpenStreetMap tiles |
 | Charts | Inline SVG (no chart dependency) |
 
+### Mobile App (built)
+| Layer | Technology |
+|---|---|
+| Framework | Expo SDK 58, React Native 0.88, React 19, TypeScript |
+| Navigation | React Navigation 7 (stack + tabs) |
+| Offline storage | AsyncStorage (device records + outbox), Expo SecureStore (refresh token) |
+| Device APIs | expo-location, expo-network, expo-device, expo-battery, expo-haptics |
+| Tests | Vitest |
+
 ### Planned — Android
 | Component | Technology |
 |---|---|
@@ -202,7 +235,8 @@ checklists, and risk register.
 | 1 | **Web PWA v1** (offline SOS, GPS, contacts, WhatsApp/SMS, queue, privacy, auth, landing) | ✅ Shipped |
 | 2 | **Backend API** (auth/RBAC, contacts, guardian links, incidents, locations, notifications, realtime, audit, analytics) | ✅ Built |
 | 2b | **Web Command Center** (11 role-aware operations modules) | ✅ Built |
-| 3 | Android app, Gnani AI voice integration, end-to-end mobile sync | In progress |
+| 2c | **Mobile app** (Expo, offline SOS/report outbox, contacts, guardians, settings) | ✅ Built |
+| 3 | Gnani AI voice integration, final end-to-end integration | In progress |
 | 4 | Wear OS companion, WhatsApp Business API, nearby relay, multi-language | Not started |
 
 ---
@@ -232,6 +266,11 @@ cd ../dashboard
 cp .env.example .env    # VITE_API_URL=http://localhost:4000/api/v1
 npm install
 npm run dev             # http://localhost:5174
+
+cd ../mobile
+cp .env.example .env    # EXPO_PUBLIC_API_URL=http://localhost:4000/api/v1
+npm install
+npm run web             # http://localhost:8081
 ```
 
 ---
@@ -255,6 +294,7 @@ npm run dev             # http://localhost:5174
 - **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — architecture diagrams
 - **[backend/README.md](backend/README.md)** — API endpoints, auth model, env vars
 - **[dashboard/README.md](dashboard/README.md)** — command center setup, roles, module map
+- **[mobile/README.md](mobile/README.md)** — mobile setup, offline model, limitations
 
 ---
 
