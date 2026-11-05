@@ -114,7 +114,7 @@ const successSchema = z
     detected_language_code: z.string().min(1).optional(),
     processing_time: z.number().finite().nonnegative().optional(),
     end_to_end_latency: z.number().finite().nonnegative().optional(),
-    truncated: z.literal(true).optional(),
+    truncated: z.boolean().optional(),
   })
   .passthrough();
 

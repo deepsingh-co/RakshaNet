@@ -369,12 +369,27 @@ text-intent/chat endpoint**. Intent is therefore deterministic local logic:
 
 ### Verification status
 
-The contract was checked against the official documentation and the request
-format/parsing/error mapping is covered by tests. **A real provider request has
-not succeeded in this environment** because `backend/.env` and `GNANI_API_KEY`
-are absent. The sanitised fixtures are docs-derived (`captured_live: false`) and
-are not evidence of a live call. Use `npm run gnani:smoke -- --audio <clip>` with
-real credentials to complete live verification.
+**A real Gnani request succeeded** on 2026-11-05, both through the service and
+through the authenticated HTTP route:
+
+- `npm run gnani:smoke -- --audio <clip>` → `POST https://api.vachana.ai/stt/v3`
+  returned a real transcript, `model=prisma-v3.0`, `detected_language_code=en-IN`,
+  `truncated=false`.
+- Authenticated `POST /api/v1/ai/transcribe` (multer → Gnani → local intent)
+  returned transcript `"Help! Me, someone is following me."`,
+  intent `EMERGENCY_SOS`, severity `CRITICAL`, confidence `0.93`,
+  `requiresConfirmation=true`, `autoDispatch=false`,
+  `autoIncidentCreation=false`, `manualSosAvailable=true`.
+
+The sanitised live capture is stored at
+`backend/src/fixtures/gnani-stt-prisma-v3.live-emergency.json`
+(`captured_live: true`). It contains only the provider response and a
+`synthetic Windows SAPI text-to-speech` note — no key, header, or account data.
+The other fixtures remain docs-derived (`captured_live: false`).
+
+The live result exists only with the real key configured in the ignored
+`backend/.env`. Tests force `AI_MODE=console` and an empty `GNANI_API_KEY`, so a
+developer's local `.env` cannot trigger real provider calls or hide a regression.
 
 
 ---
@@ -440,7 +455,7 @@ Tests:
 
 | Suite | Command | Current result |
 |---|---|---|
-| Backend | `cd backend && npm test` | 74/74 passing |
+| Backend | `cd backend && npm test` | 75/75 passing |
 | Mobile logic | `cd mobile && npm test` | 39/39 passing |
 | Typecheck | both projects | clean |
 | Dashboard build | `cd dashboard && npm run build` | clean |
@@ -456,15 +471,15 @@ These are current limitations, not future promises:
 
 - **Notification providers are not configured.** Delivery is console-simulated
   (`0 delivered`); no real SMS/WhatsApp/push was sent or verified.
-- **A live Gnani STT request has not succeeded.** The request format, response
-  parsing, error mapping, and local intent engine are tested against the
-  published contract, but no `GNANI_API_KEY` was available. Fixtures are
-  docs-derived (`captured_live: false`), not live captures. Run
-  `npm run gnani:smoke -- --audio <clip>` with real credentials to close this.
-- **Voice was not exercised end-to-end.** Recording, permission handling,
-  WebM→WAV conversion, and multipart upload are implemented and unit-tested, but
-  no real microphone → Gnani run happened. Native M4A recording is unverified
-  without a native build. Web microphone access requires `localhost` or HTTPS.
+- **Live Gnani STT is verified, but voice input is not physical-microphone
+  verified.** The real provider call used synthetic text-to-speech audio, not a
+  person speaking into a phone. Recording, permission handling, WebM→WAV
+  conversion, and multipart upload are implemented and unit-tested. Native M4A
+  recording is unverified without a native build. Web microphone access requires
+  `localhost` or HTTPS.
+- **The exposed Gnani key must be rotated.** It was shared in chat history
+  during verification. It is stored only in the gitignored `backend/.env` and is
+  never committed or returned by the API; rotate it before any real deployment.
 - **Intent classification is deterministic local logic**, not an LLM. It is
   intentionally labelled `provider: "local-intent"` and `mode: "local"`; it can
   miss unusual phrasing, which is why low confidence is marked ambiguous and

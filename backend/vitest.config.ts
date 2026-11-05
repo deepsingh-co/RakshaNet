@@ -18,6 +18,10 @@ export default defineConfig({
       JWT_REFRESH_SECRET: 'test-refresh-secret',
       OTP_MODE: 'console',
       NOTIFICATION_WEBHOOK_SECRET: 'test-webhook-secret',
+      // A developer's backend/.env must never switch the suite into live mode
+      // or make real provider calls.
+      AI_MODE: 'console',
+      GNANI_API_KEY: '',
     },
   },
 });

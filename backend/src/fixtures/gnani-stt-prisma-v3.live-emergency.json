@@ -1,0 +1,23 @@
+{
+  "source": "live capture — POST https://api.vachana.ai/stt/v3",
+  "model": "prisma-v3.0",
+  "captured_live": true,
+  "captured_at": "2026-11-05",
+  "audio": {
+    "kind": "synthetic Windows SAPI text-to-speech",
+    "phrase": "Help me, someone is following me.",
+    "format": "WAV, 16 kHz, mono, 16-bit",
+    "bytes": 108846,
+    "simulated_speech": true
+  },
+  "note": "Real Gnani response. The request_id is a provider correlation id, not a secret. No account data, PII, API key, or header is present.",
+  "response": {
+    "success": true,
+    "request_id": "suraksha-a7b91110-5dae-4d26-8895-c8d8758c6fc0",
+    "transcript": "Help! Me, someone is following me.",
+    "model": "prisma-v3.0",
+    "detected_language_code": "en-IN",
+    "processing_time": 0.10775065422058105,
+    "truncated": false
+  }
+}

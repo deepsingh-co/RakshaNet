@@ -146,7 +146,13 @@ verified contact could be alerted; the app does not imply help is on the way.
 - Mobile typecheck clean; `39/39` Vitest tests pass (outbox 13, sync 10,
   formatting 4, report content 5, voice helpers 7); Expo web export succeeds
   (1.6 MB JS bundle).
-- Backend regression suite passes: `74/74` tests; backend typecheck clean.
+- Backend regression suite passes: `75/75` tests; backend typecheck clean.
+- Live Gnani STT verified: the real `POST https://api.vachana.ai/stt/v3` call and
+  the authenticated `/api/v1/ai/transcribe` route returned transcript
+  `"Help! Me, someone is following me."` with `EMERGENCY_SOS` / `CRITICAL`,
+  confidence `0.93`, and confirmation required. This used synthetic TTS audio,
+  not a physical microphone. The sanitised capture is
+  `backend/src/fixtures/gnani-stt-prisma-v3.live-emergency.json`.
 - Runtime checks against the real backend in Expo web:
   - Guardian sign-in, hard reload session restore, live Home data.
   - Report creation, incident detail, responder note, SOS hold trigger with
@@ -159,8 +165,10 @@ verified contact could be alerted; the app does not imply help is on the way.
     alert still completes.
   - Safety assistant: typed Hinglish classification was verified through the
     backend tests (`Immediate danger` / `Critical`, confirmation required, no
-    automatic incident). Voice capture is covered by WAV/upload unit tests; a
-    real microphone + Gnani request was not possible without credentials.
+    automatic incident). Voice capture is covered by WAV/upload unit tests, and
+    live Gnani STT + local intent succeeded over the authenticated HTTP route.
+    A physical microphone was not available, so the live run used synthetic TTS
+    audio rather than a person speaking into the app.
 - Offline E2E: rejected `/api/v1` fetches and forced `navigator.onLine = false`.
   The report showed `Local only` / `Pending sync` / original device time. After
   restoring the network it synced automatically, then showed `Offline honesty`,
@@ -171,15 +179,16 @@ verified contact could be alerted; the app does not imply help is on the way.
 
 - **Native builds were not executed.** Verification ran on Expo web. iOS and
   Android builds, store signing, and physical-device behavior are unverified.
-- **Voice was not exercised end-to-end.** The recording UI, permission handling,
-  WebM→WAV conversion, and multipart upload are implemented and unit-tested, but
-  no live microphone-to-Gnani request was run. Native M4A recording is also
-  unverified because no native build was executed.
-- **Gnani live mode is not verified.** No `GNANI_API_KEY` was available, so the
-  real provider request never ran. The code follows the published contract
-  (`POST https://api.vachana.ai/stt/v3`, `X-API-Key-ID`, Prisma v3.0) and fails
-  honestly with `GNANI_NOT_CONFIGURED` when unconfigured. Text intent is
-  deterministic local logic, not a cloud language model.
+- **Voice was not exercised with a physical microphone.** The recording UI,
+  permission handling, WebM→WAV conversion, and multipart upload are implemented
+  and unit-tested. Live Gnani STT succeeded using synthetic TTS audio; no person
+  spoke into the app. Native M4A recording is unverified because no native build
+  was executed.
+- **Gnani live mode is verified, but the exposed key must be rotated.** The real
+  provider request succeeded against `POST https://api.vachana.ai/stt/v3` with
+  `X-API-Key-ID` and Prisma v3.0, and the sanitised response is checked in. The
+  key used for that verification was shared in chat history, so rotate it. Text
+  intent is deterministic local logic, not a cloud language model.
 - **Browser voice needs a secure context.** Expo web microphone access works on
   `localhost` or HTTPS. A plain-HTTP LAN address will be blocked by the browser.
 - **Notification delivery is simulated in development.** No SMS, WhatsApp, or

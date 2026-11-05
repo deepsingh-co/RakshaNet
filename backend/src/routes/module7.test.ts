@@ -37,6 +37,16 @@ const authErrorFixture = JSON.parse(
   ),
 ) as { response: Record<string, unknown>; http_status: number };
 
+const liveEmergencyFixture = JSON.parse(
+  readFileSync(
+    new URL('../fixtures/gnani-stt-prisma-v3.live-emergency.json', import.meta.url),
+    'utf8',
+  ),
+) as {
+  captured_live: boolean;
+  response: { transcript: string; request_id: string; model: string };
+};
+
 const TEST_CONFIG: GnaniSttConfig = {
   apiKey: 'test-key-not-a-secret',
   endpoint: GNANI_STT_ENDPOINT,
@@ -301,6 +311,28 @@ describe('Gnani STT client', () => {
       truncated: false,
       simulated: false,
     });
+  });
+
+  it('parses the sanitized live response and classifies it', () => {
+    expect(liveEmergencyFixture.captured_live).toBe(true);
+
+    const parsed = parseGnaniSttResponse(200, liveEmergencyFixture.response);
+    expect(parsed.provider).toBe('gnani');
+    expect(parsed.model).toBe('prisma-v3.0');
+    expect(parsed.requestId).toBe(liveEmergencyFixture.response.request_id);
+    expect(parsed.transcript).toBe(liveEmergencyFixture.response.transcript);
+    expect(parsed.detectedLanguageCode).toBe('en-IN');
+    expect(parsed.simulated).toBe(false);
+
+    const interpretation = classifySafetyText(parsed.transcript, {
+      transcript: parsed.transcript,
+      ...(parsed.detectedLanguageCode
+        ? { detectedLanguageCode: parsed.detectedLanguageCode }
+        : {}),
+    });
+    expect(interpretation.intent).toBe('EMERGENCY_SOS');
+    expect(interpretation.severity).toBe('CRITICAL');
+    expect(interpretation.requiresConfirmation).toBe(true);
   });
 
   it('rejects a body that does not match the contract', () => {
