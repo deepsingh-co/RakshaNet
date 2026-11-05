@@ -1,4 +1,5 @@
-import { HashRouter, NavLink, Navigate, Route, Routes } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+import { HashRouter, Link, NavLink, Navigate, Route, Routes } from 'react-router-dom';
 import { SosScreen } from './features/sos/SosScreen';
 import { ContactsScreen } from './features/contacts/ContactsScreen';
 import { HistoryScreen } from './features/history/HistoryScreen';
@@ -13,6 +14,36 @@ import { NoticeBar } from './components/NoticeBar';
 import { OfflineBadge } from './components/OfflineBadge';
 import { FloatingSos } from './components/FloatingSos';
 import { useAuth } from './store/authStore';
+
+// The advanced feature lab is lazy-loaded so its dependencies (framer-motion,
+// lucide-react, axios) never weigh down the offline SOS first load.
+const AdvancedLayout = lazy(() =>
+  import('./features/advanced/AdvancedLayout').then((m) => ({ default: m.AdvancedLayout })),
+);
+const FeaturesHub = lazy(() => import('./features/advanced/pages/FeaturesHub'));
+const DeepfakeWeb = lazy(() => import('./features/advanced/pages/DeepfakeWeb'));
+const CompanionWeb = lazy(() => import('./features/advanced/pages/CompanionWeb'));
+const StalkerWeb = lazy(() => import('./features/advanced/pages/StalkerWeb'));
+const MeshWeb = lazy(() => import('./features/advanced/pages/MeshWeb'));
+const PodsWeb = lazy(() => import('./features/advanced/pages/PodsWeb'));
+const BystanderWeb = lazy(() => import('./features/advanced/pages/BystanderWeb'));
+const BlockchainWeb = lazy(() => import('./features/advanced/pages/BlockchainWeb'));
+const BiometricWeb = lazy(() => import('./features/advanced/pages/BiometricWeb'));
+const WearablesWeb = lazy(() => import('./features/advanced/pages/WearablesWeb'));
+const WalkWeb = lazy(() => import('./features/advanced/pages/WalkWeb'));
+const TraumaWeb = lazy(() => import('./features/advanced/pages/TraumaWeb'));
+const LegalWeb = lazy(() => import('./features/advanced/pages/LegalWeb'));
+const VoiceCodeWeb = lazy(() => import('./features/advanced/pages/VoiceCodeWeb'));
+const SafeRideWeb = lazy(() => import('./features/advanced/pages/SafeRideWeb'));
+const VitalsUnavailable = lazy(() => import('./features/advanced/pages/VitalsUnavailable'));
+
+function FeatureLoading() {
+  return (
+    <div className="grid min-h-screen place-items-center bg-[#05060f] px-4 text-center text-sm text-slate-400">
+      Loading feature lab…
+    </div>
+  );
+}
 
 const TABS = [
   { to: '/', label: 'SOS', icon: SosIcon, end: true },
@@ -33,6 +64,36 @@ export default function App() {
         {/* Auth screens are standalone — no shell, no nav, one clear task. */}
         <Route path="/login" element={<LoginScreen />} />
         <Route path="/signup" element={<SignupScreen />} />
+
+        {/* Advanced feature lab: real UI, demo backends clearly labelled. */}
+        <Route
+          path="/features"
+          element={
+            <RequireAuth>
+              <Suspense fallback={<FeatureLoading />}>
+                <AdvancedLayout />
+              </Suspense>
+            </RequireAuth>
+          }
+        >
+          <Route index element={<FeaturesHub />} />
+          <Route path="deepfake" element={<DeepfakeWeb />} />
+          <Route path="companion" element={<CompanionWeb />} />
+          <Route path="stalker" element={<StalkerWeb />} />
+          <Route path="mesh" element={<MeshWeb />} />
+          <Route path="pods" element={<PodsWeb />} />
+          <Route path="bystander" element={<BystanderWeb />} />
+          <Route path="blockchain" element={<BlockchainWeb />} />
+          <Route path="biometric" element={<BiometricWeb />} />
+          <Route path="wearables" element={<WearablesWeb />} />
+          <Route path="wearables/vitals" element={<VitalsUnavailable />} />
+          <Route path="walk" element={<WalkWeb />} />
+          <Route path="trauma" element={<TraumaWeb />} />
+          <Route path="legal" element={<LegalWeb />} />
+          <Route path="voicecode" element={<VoiceCodeWeb />} />
+          <Route path="saferide" element={<SafeRideWeb />} />
+          <Route path="*" element={<Navigate to="/features" replace />} />
+        </Route>
 
         {/* Everything else requires a signed-in user. */}
         <Route
@@ -86,7 +147,15 @@ function AppShell() {
             <p className="text-[11px] leading-tight text-ink-faint">Safety, even offline</p>
           </div>
         </div>
-        <OfflineBadge />
+        <div className="flex shrink-0 items-center gap-2">
+          <Link
+            to="/features"
+            className="hidden rounded-full border border-line px-3 py-1 text-[11px] font-semibold text-ink-soft transition hover:border-line-strong hover:text-ink sm:inline-flex"
+          >
+            Features
+          </Link>
+          <OfflineBadge />
+        </div>
       </header>
 
       <NoticeBar />

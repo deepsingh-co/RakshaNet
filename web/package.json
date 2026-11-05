@@ -13,7 +13,10 @@
     "icons": "node scripts/generate-icons.mjs"
   },
   "dependencies": {
+    "axios": "^1.21.0",
     "dexie": "^4.4.7",
+    "framer-motion": "^14.9.1",
+    "lucide-react": "^1.68.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.4",

@@ -303,6 +303,31 @@ show an explicit access-denied state, and the API enforces the same restriction.
 The map shows last-known device positions and lists incidents without GPS
 separately. CSV exports are role-scoped and capped at 5,000 rows.
 
+### 6.1 Advanced feature lab (web PWA)
+
+The Vasudra/AEGIS `features/` pages are merged into the existing PWA at
+`/#/features`, behind the same device-local sign-in. The four original tabs are
+unchanged. The lab is lazy-loaded into separate chunks.
+
+| Aspect | Status |
+|---|---|
+| UI modules | 15 pages + hub, all rendering |
+| Auth | Adapted to the existing `web` session (name/contact only) |
+| RakshaNet backend calls | None (no compatible endpoints) |
+| Separate Spring Boot / FastAPI services | Not included |
+| Presentation | Persistent preview banner + `Demo` badge on every hub card |
+| Network behaviour | Feature API client refuses requests unless `VITE_FEATURES_API_URL` / `VITE_FEATURES_AI_URL` is set |
+| Data | Local demo fallbacks; no incident created, no contact alerted |
+
+The pages still describe the source project's ML stack (Isolation Forest,
+RandomForest, etc.). That list is labelled as a reference design, not a claim
+that those models run in RakshaNet. The wearables vitals view is explicitly
+replaced with a "not included" page because it needs Google OAuth and a sync
+service that do not exist here.
+
+Tests: the existing `web` suite remains **15/15 passing**; typecheck and
+production build are clean.
+
 ---
 
 ## 7. Safety assistant: Gnani STT + local intent
@@ -449,6 +474,8 @@ numbers are masked in list/dashboard responses.
 | `GNANI_TIMEOUT_MS` | backend | STT request timeout (default 20 s) |
 | `AI_MODE` | backend | `console` (local intent only) or `live` (Gnani STT) |
 | `VITE_API_URL` | dashboard | API base |
+| `VITE_FEATURES_API_URL` | web (optional) | Advanced-lab Spring-style API; unset = demo fallbacks |
+| `VITE_FEATURES_AI_URL` | web (optional) | Advanced-lab FastAPI service; unset = demo fallbacks |
 | `EXPO_PUBLIC_API_URL` | mobile | API base |
 
 Tests:

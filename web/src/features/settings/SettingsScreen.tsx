@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useSettings } from '../../store/settingsStore';
 import { useAuth } from '../../store/authStore';
 import { clearAllData, db } from '../../data/db';
@@ -85,6 +85,18 @@ export function SettingsScreen() {
             {saved ? 'Saved ✓' : 'Save'}
           </button>
         </form>
+      </section>
+
+      <section className="card p-4">
+        <h2 className="text-sm font-bold text-ink">Advanced safety features</h2>
+        <p className="mt-1 text-xs leading-relaxed text-ink-faint">
+          Preview modules merged from the Vasudra/AEGIS project. Their separate
+          backends are not connected to RakshaNet, so they run on clearly
+          labelled demo data.
+        </p>
+        <Link to="/features" className="btn btn-quiet mt-3 inline-flex w-full justify-center py-2.5 text-sm">
+          Open feature lab
+        </Link>
       </section>
 
       <section className="card p-4">

@@ -47,6 +47,28 @@ npm run build    # production build + service worker
 npx vitest run   # unit tests
 ```
 
+### Advanced feature lab (merged into `web/`)
+The `features/` pages from the Vasudra/AEGIS project are integrated at
+`/#/features` inside the existing PWA, behind the same device-local sign-in. The
+original SOS, contacts, history and settings screens are unchanged.
+
+- **15 modules:** stalker detector, mesh SOS, safety pods, bystander beacon,
+  biometric panic, child-safety wearables, post-incident care, voice secret code,
+  safe-ride verification, deepfake/companion/legal/walk/blockchain views.
+- **Honest status:** the separate Spring Boot and FastAPI services those pages
+  expected are **not** part of RakshaNet. A persistent banner labels the lab as a
+  preview, the hub marks every card **Demo**, and API calls are refused when no
+  feature backend is configured. Pages fall back to local demo data; nothing
+  creates an incident or alerts a contact.
+- **Wired for real:** only the signed-in RakshaNet profile name/contact is used.
+  The web session shape is adapted in
+  `web/src/features/advanced/store/authStore.ts`.
+- **Optional services:** set `VITE_FEATURES_API_URL` and
+  `VITE_FEATURES_AI_URL` only if you actually run compatible backends. Without
+  them the demo fallbacks are used and no request leaves the page.
+- The lab is lazy-loaded, so the offline SOS first load does not pay for
+  `framer-motion`, `lucide-react` or `axios`.
+
 ---
 
 ## Backend API + Command Center (built)
@@ -206,6 +228,7 @@ verified contract, error mapping, and `npm run gnani:smoke`.
 | State | Zustand |
 | Offline storage | Dexie (IndexedDB) |
 | Routing | React Router (HashRouter) |
+| Advanced lab | Merged Vasudra/AEGIS feature pages (lazy-loaded, demo-labelled) |
 | Tests | Vitest |
 
 ### Backend + Command Center (built)
@@ -257,8 +280,9 @@ checklists, and risk register.
 | 2 | **Backend API** (auth/RBAC, contacts, guardian links, incidents, locations, notifications, realtime, audit, analytics) | ✅ Built |
 | 2b | **Web Command Center** (11 role-aware operations modules) | ✅ Built |
 | 2c | **Mobile app** (Expo, offline SOS/report outbox, contacts, guardians, settings) | ✅ Built |
-| 2d | **Safety assistant** (verified Gnani STT contract, local intent, voice capture) | ✅ Built (live request unverified — no credentials) |
-| 3 | Gnani live credentials, live voice verification, final end-to-end hardening | In progress |
+| 2d | **Safety assistant** (verified Gnani STT contract, local intent, voice capture) | ✅ Built; live STT verified with synthetic audio |
+| 2e | **Advanced feature lab** (15 merged feature pages, demo-labelled) | ✅ Integrated into `web/` |
+| 3 | Physical-microphone voice verification, final end-to-end hardening | In progress |
 | 4 | Wear OS companion, WhatsApp Business API, nearby relay, multi-language | Not started |
 
 ---

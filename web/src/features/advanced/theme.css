@@ -1,0 +1,150 @@
+/*
+  Scoped theme for the imported advanced feature pages.
+  Everything is nested under `.vasudra` so it cannot change the existing
+  RakshaNet screens. The feature pages were designed for a dark glass UI;
+  these variables supply the tokens their inline styles and `.glass`
+  utilities expect.
+*/
+.vasudra {
+  --aegis-primary: #ff3d7f;
+  --aegis-primary-hover: #ff5c91;
+  --aegis-secondary: #2ee6a6;
+  --aegis-accent: #38e8ff;
+  --aegis-warning: #ffb020;
+  --aegis-violet: #8b5cf6;
+  --aegis-info: #38e8ff;
+  --aegis-bg: #05060f;
+  --aegis-bg-alt: #0a0d1f;
+  --aegis-surface: rgba(255, 255, 255, 0.05);
+  --aegis-surface-alt: rgba(255, 255, 255, 0.08);
+  --aegis-card: rgba(255, 255, 255, 0.06);
+  --aegis-card-hover: rgba(255, 255, 255, 0.1);
+  --aegis-text-primary: #e6e9f5;
+  --aegis-text-secondary: #a7adc4;
+  --aegis-text-muted: #6b7190;
+  --aegis-border: rgba(255, 255, 255, 0.08);
+  --aegis-border-strong: rgba(255, 255, 255, 0.16);
+  --aegis-gradient-primary: linear-gradient(135deg, #ff3d7f 0%, #ff7aa8 100%);
+  --aegis-gradient-surface: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.08),
+    rgba(255, 255, 255, 0.02)
+  );
+  --aegis-shadow-glow-primary:
+    0 0 0 1px rgba(255, 61, 127, 0.35), 0 10px 40px -10px rgba(255, 61, 127, 0.6);
+  --aegis-shadow-glow-secondary:
+    0 0 0 1px rgba(56, 232, 255, 0.35), 0 10px 40px -10px rgba(56, 232, 255, 0.55);
+  --aegis-shadow-card: 0 8px 30px -10px rgba(0, 0, 0, 0.5);
+
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 12% -10%, rgba(255, 61, 127, 0.16), transparent 42%),
+    radial-gradient(circle at 92% 8%, rgba(56, 232, 255, 0.12), transparent 40%),
+    var(--aegis-bg);
+  color: var(--aegis-text-primary);
+}
+
+.vasudra .glass {
+  background: var(--aegis-gradient-surface);
+  border: 1px solid var(--aegis-border);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border-radius: 18px;
+}
+
+.vasudra .glass-strong {
+  background: var(--aegis-gradient-surface);
+  border: 1px solid var(--aegis-border-strong);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  border-radius: 22px;
+}
+
+.vasudra .glass-chip {
+  background: var(--aegis-surface);
+  border: 1px solid var(--aegis-border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: 999px;
+}
+
+.vasudra .glow-pink {
+  box-shadow: var(--aegis-shadow-glow-primary);
+}
+
+.vasudra .glow-cyan,
+.vasudra .glow-amber {
+  box-shadow: var(--aegis-shadow-glow-secondary);
+}
+
+.vasudra .text-gradient-pink {
+  background: var(--aegis-gradient-primary);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.vasudra .text-gradient-cyan {
+  background: linear-gradient(
+    90deg,
+    var(--aegis-accent),
+    var(--aegis-info),
+    var(--aegis-accent)
+  );
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.vasudra .text-gradient-amber {
+  background: linear-gradient(90deg, #ffb020, #ff8a3d, #ffb020);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.vasudra .tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.vasudra .blink {
+  animation: aegis-blink 1.2s ease-in-out infinite;
+}
+
+@keyframes aegis-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+
+.vasudra .no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.vasudra .no-scrollbar {
+  scrollbar-width: none;
+}
+
+.vasudra ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.vasudra ::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.vasudra ::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--aegis-text-muted) 55%, transparent);
+  border-radius: 999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vasudra .blink {
+    animation: none;
+  }
+}
