@@ -225,6 +225,40 @@ Returns `notifications` (destinations always masked), a `summary` with
   (`id`, `fullName`, `email`, `phoneMasked`, `role`, `accountType`) so the command center
   can show who is in danger without exposing full phone numbers.
 
+## Safety advisor API (Module 7 — Gnani adapter)
+
+Text/transcript safety guidance. The adapter does **not** create incidents and
+does **not** dispatch emergency services; the app must confirm a real SOS.
+
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/api/v1/ai/status` | user | Provider mode, configuration presence, and honesty flags (no secrets) |
+| POST | `/api/v1/ai/interpret` | user | Classify a Hinglish message and return guidance; raw text is not audited |
+
+```json
+POST /api/v1/ai/interpret
+{ "text": "Koi mujhe follow kar raha hai", "language": "auto" }
+```
+
+The response contains `intent`, `severity`, `confidence`, a Hinglish `reply`,
+`suggestedAction`, `requiresConfirmation: true`, and provider metadata
+(`provider`, `mode`, `simulated`, `degraded`, optional `providerError`).
+
+- `AI_MODE=console` (default in development/test) uses a deterministic local
+  classifier and returns `simulated: true`.
+- `AI_MODE=live` POSTs `{ text, language, session_id, context }` to
+  `GNANI_API_URL` with `Authorization: Bearer <GNANI_API_KEY>` and expects
+  `{ intent, severity, confidence, reply|response|answer }`.
+- The live Gnani contract is **not verified** here: no credentials are present.
+  On missing credentials, timeout, non-2xx, or a malformed body, the route falls
+  back to the local classifier with `degraded: true` and a `providerError` code.
+  It never pretends Gnani answered.
+- Only text interpretation is implemented. Speech-to-text and text-to-speech are
+  **not** wired up, so this must not be described as voice input yet.
+- `POST /ai/interpret` is rate-limited (60/min) and audited as
+  `AI_INTERPRETED`; the audit detail stores intent/severity/provider metadata,
+  never the user's message.
+
 ### Admin provisioning
 
 Admin accounts cannot self-register. Provision one per environment:
@@ -257,8 +291,9 @@ The script refuses to elevate an existing non-admin account. Running it twice is
 ## Tests
 
 ```bash
-npm test        # 50 tests (11 auth/health + 16 contacts/users/guardian + 9 incidents
-                #           + 6 Socket.IO + 3 audit API + 5 analytics/notifications)
+npm test        # 58 tests (11 auth/health + 16 contacts/users/guardian + 9 incidents
+                #           + 6 Socket.IO + 3 audit API + 5 analytics/notifications
+                #           + 8 safety-advisor)
 npm run typecheck
 ```
 

@@ -13,6 +13,7 @@ import { notificationWebhookHandler } from './routes/notificationWebhook.js';
 import { auditRouter } from './routes/audit.js';
 import { analyticsRouter } from './routes/analytics.js';
 import { notificationsRouter } from './routes/notifications.js';
+import { aiRouter } from './routes/ai.js';
 import { errorHandler, notFound } from './middleware/error.js';
 
 export function createApp() {
@@ -56,6 +57,7 @@ export function createApp() {
   app.use('/api/v1/audit', auditRouter);
   app.use('/api/v1/analytics', analyticsRouter);
   app.use('/api/v1/notifications', notificationsRouter);
+  app.use('/api/v1/ai', aiRouter);
 
   app.get('/api/v1/health', (_req, res) => {
     res.json({

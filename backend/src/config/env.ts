@@ -23,7 +23,10 @@ const schema = z.object({
   GNANI_API_KEY: z.string().optional().default(''),
   GNANI_API_URL: z.string().optional().default(''),
   GNANI_LANGUAGE: z.string().default('auto'),
+  GNANI_TIMEOUT_MS: z.coerce.number().int().positive().max(30_000).default(8_000),
   AI_PROVIDER: z.string().default('gnani'),
+  /** console = deterministic local guidance (dev/test), live = call Gnani. */
+  AI_MODE: z.enum(['console', 'live']).optional(),
 
   SMS_PROVIDER: z.string().optional().default(''),
   SMS_API_KEY: z.string().optional().default(''),
@@ -68,6 +71,8 @@ export const env = {
   isTest,
   /** Dev/test default is a clearly-labelled simulation, not a silent fake send. */
   notificationMode: parsed.data.NOTIFICATION_MODE ?? (isProd ? 'live' : 'console'),
+  /** No Gnani credentials in dev => deterministic local guidance, clearly labelled. */
+  aiMode: parsed.data.AI_MODE ?? (isProd ? 'live' : 'console'),
 };
 
 export type Env = typeof env;
