@@ -2,12 +2,11 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Sparkles, Shield, Cpu, Fingerprint, Radio, Users, HandHeart,
-  Watch, Footprints, Heart, Brain, Zap, Mic,
+  Lock, Watch, Footprints, Heart, Scale, Brain, Zap, Mic,
 } from "lucide-react";
 import { Pill } from "../ui";
 
 const FEATURES = [
-  /*
   {
     id: "deepfake",
     icon: Shield,
@@ -26,7 +25,6 @@ const FEATURES = [
     tone: "cyan",
     route: "/features/companion",
   },
-  */
   {
     id: "stalker",
     icon: Cpu,
@@ -63,7 +61,6 @@ const FEATURES = [
     tone: "amber",
     route: "/features/bystander",
   },
-  /*
   {
     id: "blockchain",
     icon: Lock,
@@ -73,7 +70,6 @@ const FEATURES = [
     tone: "pink",
     route: "/features/blockchain",
   },
-  */
   {
     id: "biometric",
     icon: Fingerprint,
@@ -92,7 +88,6 @@ const FEATURES = [
     tone: "amber",
     route: "/features/wearables",
   },
-  /*
   {
     id: "walk",
     icon: Footprints,
@@ -102,7 +97,6 @@ const FEATURES = [
     tone: "pink",
     route: "/features/walk",
   },
-  */
   {
     id: "trauma",
     icon: Heart,
@@ -112,7 +106,6 @@ const FEATURES = [
     tone: "cyan",
     route: "/features/trauma",
   },
-  /*
   {
     id: "legal",
     icon: Scale,
@@ -122,7 +115,6 @@ const FEATURES = [
     tone: "amber",
     route: "/features/legal",
   },
-  */
   {
     id: "voicecode",
     icon: Mic,
@@ -188,7 +180,7 @@ export default function FeaturesHub() {
             data and say so.
           </p>
           <div className="flex flex-wrap gap-2 mt-5">
-            <Pill tone="pink"><Zap className="w-3 h-3" /> 9 MODULES</Pill>
+            <Pill tone="pink"><Zap className="w-3 h-3" /> 14 MODULES</Pill>
             <Pill tone="cyan"><Brain className="w-3 h-3" /> UI INTEGRATION</Pill>
             <Pill tone="amber"><Shield className="w-3 h-3" /> DEMO FALLBACKS</Pill>
           </div>
