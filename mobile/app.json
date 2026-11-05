@@ -19,7 +19,7 @@
         "NSLocationWhenInUseUsageDescription": "SURAKSHA AI attaches your last known location to an emergency alert and lets you share live location with trusted contacts while an incident is active.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "SURAKSHA AI attaches your last known location to an emergency alert and lets you share live location with trusted contacts while an incident is active.",
         "NSCameraUsageDescription": "Camera access is not used in this version.",
-        "NSMicrophoneUsageDescription": "Microphone access is not used in this version."
+        "NSMicrophoneUsageDescription": "SURAKSHA AI uses the microphone only when you tap the voice assistant, to transcribe a short safety request. Audio is sent once for transcription and is not stored."
       }
     },
     "android": {
@@ -32,6 +32,7 @@
       "permissions": [
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
+        "RECORD_AUDIO",
         "VIBRATE"
       ],
       "predictiveBackGestureEnabled": false,
@@ -47,6 +48,13 @@
         "expo-location",
         {
           "locationWhenInUsePermission": "SURAKSHA AI uses your location to attach it to an emergency alert and share it with your trusted contacts."
+        }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "SURAKSHA AI uses the microphone only when you tap the voice assistant, to transcribe a short safety request.",
+          "recordAudioAndroid": true
         }
       ]
     ]

@@ -35,6 +35,7 @@ export const AUDIT_ACTIONS = [
   'GUARDIAN_LINK_CREATED',
   'GUARDIAN_LINK_REVOKED',
   'AI_INTERPRETED',
+  'AI_TRANSCRIBED',
   'ADMIN_ACTION',
 ] as const;
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

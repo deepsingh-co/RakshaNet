@@ -1,0 +1,14 @@
+{
+  "source": "https://docs.gnani.ai/api/STT/speech-to-text.md#authentication-and-rate-limits",
+  "endpoint": "POST https://api.vachana.ai/stt/v3",
+  "http_status": 401,
+  "captured_live": false,
+  "note": "Sanitised official documented authentication error shape. No key or token is present.",
+  "response": {
+    "detail": {
+      "error_code": "INVALID_API_KEY",
+      "message": "Unauthorized",
+      "status_code": 401
+    }
+  }
+}

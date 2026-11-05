@@ -69,7 +69,7 @@ become verified, and either party can revoke the link.
 | Alerts | Incident list + filters | Active/all queues, local-only and pending-sync records kept visible |
 | Incident detail | Live or local record | Timeline, delivery truth, location, notes, owner/guardian actions |
 | Report | Hinglish templates + free text | Severity, optional location, creates a local record first |
-| Safety assistant | Hinglish guidance | Calls the backend AI adapter, labels console/degraded answers honestly, keeps every action user-confirmed |
+| Safety assistant | Voice + typed guidance | Records a short clip, uploads it to the backend for Gnani Prisma v3.0 transcription, shows the transcript and a locally classified intent, and keeps every action user-confirmed |
 | People | Person hub | Entry points for contacts and guardian links |
 | Contacts | Trusted contacts | Add, verify, make primary, remove; phone changes reset verification |
 | Guardians | Guardian links | Invite, consent, create child account, revoke; scoped safety access only |
@@ -79,6 +79,31 @@ The SOS button requires a 3-second hold so a pocket press does not send an
 alert. Location is requested once, silently, before the alert is queued. The
 alert never waits for GPS; if permission is denied it is still saved and sent,
 and the detail screen says that location was unavailable.
+
+## Voice capture
+
+The Safety assistant uses `expo-audio` (`RecordingPresets.HIGH_QUALITY`):
+
+1. Tap the microphone. The app requests the OS microphone permission and shows a
+   clear message if it is denied.
+2. Record up to 30 seconds (the Gnani documented limit). A pulse and timer show
+   recording state; the timer stops the recording automatically at 30 seconds.
+3. On Android/iOS the recorder produces M4A (accepted by Gnani). On web the
+   browser produces WebM, so `src/lib/voice.ts` decodes it with the Web Audio API
+   and re-encodes mono 16-bit PCM WAV at 16 kHz before upload.
+4. `POST /api/v1/ai/transcribe` returns the transcript plus a locally classified
+   intent. The UI shows both, the detected language, provider metadata, and an
+   explicit “Gnani transcript · local intent” badge.
+5. Typed input remains available as a fallback (`Cannot speak? Type instead`).
+
+Audio is held in memory for one request and is never stored by the backend or
+written to the audit log. The transcript is shown to the user and reduced to
+provider/intent metadata in the audit trail.
+
+Voice capture is unit-tested (WAV header, resampling, native vs web upload
+paths). A real microphone → Gnani request was **not** run in this environment
+because no Gnani credentials are present; with `AI_MODE=console` the API
+honestly returns `GNANI_NOT_CONFIGURED` and the UI points to typing/SOS.
 
 ## Offline-first model
 
@@ -118,9 +143,10 @@ verified contact could be alerted; the app does not imply help is on the way.
 
 ## Verification performed
 
-- Mobile typecheck clean; `32/32` Vitest tests pass (outbox 13, sync 10,
-  formatting 4, report content 5); Expo web export succeeds (1.5 MB JS bundle).
-- Backend regression suite passes: `50/50` tests; backend typecheck clean.
+- Mobile typecheck clean; `39/39` Vitest tests pass (outbox 13, sync 10,
+  formatting 4, report content 5, voice helpers 7); Expo web export succeeds
+  (1.6 MB JS bundle).
+- Backend regression suite passes: `74/74` tests; backend typecheck clean.
 - Runtime checks against the real backend in Expo web:
   - Guardian sign-in, hard reload session restore, live Home data.
   - Report creation, incident detail, responder note, SOS hold trigger with
@@ -131,9 +157,10 @@ verified contact could be alerted; the app does not imply help is on the way.
     request (sessions revoked, signed out).
   - Location permission denied -> honest "Location unavailable" message; the
     alert still completes.
-  - Safety assistant in console mode: a Hinglish SOS returned `Immediate
-    danger` / `Critical`, a `Call 112` action, and an explicit **Console
-    guidance · simulated** badge; no incident was created automatically.
+  - Safety assistant: typed Hinglish classification was verified through the
+    backend tests (`Immediate danger` / `Critical`, confirmation required, no
+    automatic incident). Voice capture is covered by WAV/upload unit tests; a
+    real microphone + Gnani request was not possible without credentials.
 - Offline E2E: rejected `/api/v1` fetches and forced `navigator.onLine = false`.
   The report showed `Local only` / `Pending sync` / original device time. After
   restoring the network it synced automatically, then showed `Offline honesty`,
@@ -144,12 +171,17 @@ verified contact could be alerted; the app does not imply help is on the way.
 
 - **Native builds were not executed.** Verification ran on Expo web. iOS and
   Android builds, store signing, and physical-device behavior are unverified.
-- **No voice pipeline.** The Safety assistant accepts typed text only. There is
-  no speech-to-text, text-to-speech, wake word, or audio upload.
-- **Gnani live mode is not verified.** With no credentials configured, the app
-  receives the backend's deterministic console guidance and labels it
-  `simulated`. The Gnani request contract has not been validated against the
-  vendor.
+- **Voice was not exercised end-to-end.** The recording UI, permission handling,
+  WebM→WAV conversion, and multipart upload are implemented and unit-tested, but
+  no live microphone-to-Gnani request was run. Native M4A recording is also
+  unverified because no native build was executed.
+- **Gnani live mode is not verified.** No `GNANI_API_KEY` was available, so the
+  real provider request never ran. The code follows the published contract
+  (`POST https://api.vachana.ai/stt/v3`, `X-API-Key-ID`, Prisma v3.0) and fails
+  honestly with `GNANI_NOT_CONFIGURED` when unconfigured. Text intent is
+  deterministic local logic, not a cloud language model.
+- **Browser voice needs a secure context.** Expo web microphone access works on
+  `localhost` or HTTPS. A plain-HTTP LAN address will be blocked by the browser.
 - **Notification delivery is simulated in development.** No SMS, WhatsApp, or
   push provider is configured, so the app honestly shows console-mode
   simulations and `0 delivered`. There is no push-notification integration or

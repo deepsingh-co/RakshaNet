@@ -4,10 +4,13 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: false,
-    testTimeout: 30_000,
-    hookTimeout: 30_000,
+    testTimeout: 60_000,
+    hookTimeout: 60_000,
     pool: 'forks',
     poolOptions: { forks: { singleFork: true } },
+    // All suites share one MongoDB test database and clear collections at
+    // startup, so files must not run concurrently.
+    fileParallelism: false,
     env: {
       NODE_ENV: 'test',
       MONGODB_URI: 'mongodb://127.0.0.1:27017/suraksha_ai_test',

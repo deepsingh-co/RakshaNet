@@ -287,54 +287,125 @@ export const RELATIONSHIPS = [
 export type Relationship = (typeof RELATIONSHIPS)[number];
 
 /* ------------------------------------------------------------------ */
-/* Safety advisor (backend Gnani adapter)                              */
+/* Safety assistant (Gnani Prisma v3.0 STT + local intent)             */
 /* ------------------------------------------------------------------ */
 
 export type SafetyIntent =
-  | 'SOS'
-  | 'FOLLOWED'
-  | 'HARASSMENT'
-  | 'UNSAFE_CAB'
-  | 'ACCIDENT'
-  | 'HOME_UNSAFE'
-  | 'CHILD_UNSAFE'
-  | 'NEEDS_HELP'
-  | 'INFO'
+  | 'EMERGENCY_SOS'
+  | 'SHARE_LOCATION'
+  | 'START_JOURNEY'
+  | 'CHECK_IN'
+  | 'CALL_CONTACT'
+  | 'CANCEL_SOS'
+  | 'GENERAL_HELP'
   | 'UNKNOWN';
 
-export type SuggestedAction =
-  | 'CALL_112'
-  | 'HOLD_SOS'
-  | 'MOVE_TO_SAFE_PLACE'
+export type SafetyAction =
+  | 'OPEN_SOS'
   | 'SHARE_LOCATION'
-  | 'ALERT_TRUSTED_CONTACTS'
-  | 'CONFIRM_DETAILS'
-  | 'PROVIDE_INFO';
+  | 'START_JOURNEY'
+  | 'CHECK_IN'
+  | 'CALL_CONTACT'
+  | 'CANCEL_SOS'
+  | 'NONE';
+
+export type SafetySeverity = IncidentSeverity;
 
 export interface SafetyInterpretation {
   intent: SafetyIntent;
-  severity: IncidentSeverity;
+  severity: SafetySeverity;
   confidence: number;
   reply: string;
-  suggestedAction: SuggestedAction;
+  action: SafetyAction;
+  ambiguous: boolean;
   requiresConfirmation: boolean;
   language: string;
-  provider: string;
-  mode: 'console' | 'live';
-  simulated: boolean;
+  provider: 'local-intent';
+  mode: 'local';
+  simulated: false;
   degraded: boolean;
   providerError?: string;
+  transcript?: string;
+  detectedLanguageCode?: string;
   at: string;
+}
+
+export interface GnaniTranscription {
+  provider: 'gnani';
+  model: string;
+  requestId: string;
+  transcript: string;
+  detectedLanguageCode: string | null;
+  processingTime: number | null;
+  endToEndLatency: number | null;
+  truncated: boolean;
+  simulated: false;
 }
 
 export interface SafetyInterpretResponse {
   interpretation: SafetyInterpretation;
   honesty: {
-    autoDispatch: boolean;
-    autoIncidentCreation: boolean;
-    requiresConfirmation: boolean;
-    simulated: boolean;
+    provider: 'local-intent';
+    simulated: false;
     degraded: boolean;
+    autoDispatch: false;
+    autoIncidentCreation: false;
+    requiresConfirmation: boolean;
+    manualSosAvailable: true;
     note: string;
   };
 }
+
+export interface SafetyTranscribeResponse {
+  transcription: GnaniTranscription;
+  interpretation: SafetyInterpretation;
+  honesty: {
+    provider: 'gnani';
+    model: string;
+    simulated: false;
+    degraded: boolean;
+    autoDispatch: false;
+    autoIncidentCreation: false;
+    requiresConfirmation: boolean;
+    manualSosAvailable: true;
+    note: string;
+  };
+}
+
+export interface SafetyStatusResponse {
+  ok: boolean;
+  provider: {
+    name: string;
+    model: string;
+    mode: 'console' | 'live';
+    configured: boolean;
+    liveAvailable: boolean;
+    sttEndpoint: string;
+    textIntent: 'local';
+  };
+  capabilities: {
+    speechToText: boolean;
+    speechToTextAvailable: boolean;
+    textInterpretation: boolean;
+    textToSpeech: boolean;
+    autoDispatch: false;
+    autoIncidentCreation: false;
+  };
+  audio: {
+    maxSeconds: number;
+    maxUploadBytes: number;
+    formats: string[];
+  };
+  languages: string[];
+  intents: SafetyIntent[];
+  honesty: {
+    simulated: boolean;
+    liveSttAvailable: boolean;
+    localIntent: boolean;
+    autoDispatch: false;
+    requiresConfirmation: boolean;
+    manualSosAvailable: boolean;
+    note: string;
+  };
+}
+

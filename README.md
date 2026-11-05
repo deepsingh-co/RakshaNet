@@ -118,18 +118,26 @@ npm start               # Expo Go / emulator
 See **[mobile/README.md](mobile/README.md)** for API URL guidance per device,
 the offline outbox model, test commands, and known limitations.
 
-### Safety advisor (`backend/src/services/ai.ts`)
-A Gnani-ready guidance adapter at `POST /api/v1/ai/interpret`. It classifies a
-Hinglish/English message into a safety intent and severity, returns Hinglish
-guidance, and asks the app to confirm any real action. It never creates an
-incident and never dispatches emergency services. `GET /api/v1/ai/status`
-reports provider truth without exposing secrets.
+### Safety assistant (`backend/src/services/gnani.ts` + `intent.ts`)
+Gnani Prisma v3.0 speech-to-text with a validated local intent engine.
+`POST /api/v1/ai/transcribe` accepts a short audio clip, sends it to Gnani
+(`POST https://api.vachana.ai/stt/v3`, header `X-API-Key-ID`), and classifies the
+returned transcript on our server. `POST /api/v1/ai/interpret` classifies typed
+text locally. `GET /api/v1/ai/status` reports provider truth without exposing
+secrets.
 
-With no Gnani credentials, `AI_MODE=console` uses a deterministic local
-classifier and labels the response `simulated`. In `AI_MODE=live`, a missing
-credential, timeout, bad response, or provider error falls back locally with
-`degraded: true` and a safe error code. The live Gnani contract is **not
-verified** yet. There is no speech-to-text or text-to-speech integration.
+The fixed intent taxonomy is `EMERGENCY_SOS`, `SHARE_LOCATION`, `START_JOURNEY`,
+`CHECK_IN`, `CALL_CONTACT`, `CANCEL_SOS`, `GENERAL_HELP`, `UNKNOWN`. Output is
+Zod-validated, low-confidence results are marked ambiguous, distress is never
+silently discarded, and every real action still needs the user's confirmation.
+The assistant never creates an incident and never dispatches emergency services.
+
+Gnani exposes speech-to-text, but **no text-intent endpoint** — so text intent is
+deterministic local logic (`provider: "local-intent"`), not a cloud AI claim.
+`AI_MODE=live` requires `GNANI_API_KEY`; the backend refuses to boot without it.
+The live request itself remains **unverified in this environment** because no
+credentials are present. See **[backend/README.md](backend/README.md)** for the
+verified contract, error mapping, and `npm run gnani:smoke`.
 
 ---
 
@@ -210,7 +218,7 @@ verified** yet. There is no speech-to-text or text-to-speech integration.
 | Dashboard UI | React 18, Vite, TypeScript, React Router 6 |
 | Map | Leaflet 1.9 + OpenStreetMap tiles |
 | Charts | Inline SVG (no chart dependency) |
-| AI | Gnani adapter + deterministic console fallback (text only) |
+| AI | Gnani Prisma v3.0 speech-to-text + validated local intent engine |
 
 ### Mobile App (built)
 | Layer | Technology |
@@ -218,7 +226,7 @@ verified** yet. There is no speech-to-text or text-to-speech integration.
 | Framework | Expo SDK 58, React Native 0.88, React 19, TypeScript |
 | Navigation | React Navigation 7 (stack + tabs) |
 | Offline storage | AsyncStorage (device records + outbox), Expo SecureStore (refresh token) |
-| Device APIs | expo-location, expo-network, expo-device, expo-battery, expo-haptics |
+| Device APIs | expo-location, expo-network, expo-device, expo-battery, expo-haptics, expo-audio |
 | Tests | Vitest |
 ### Planned — Android
 | Component | Technology |
@@ -249,8 +257,8 @@ checklists, and risk register.
 | 2 | **Backend API** (auth/RBAC, contacts, guardian links, incidents, locations, notifications, realtime, audit, analytics) | ✅ Built |
 | 2b | **Web Command Center** (11 role-aware operations modules) | ✅ Built |
 | 2c | **Mobile app** (Expo, offline SOS/report outbox, contacts, guardians, settings) | ✅ Built |
-| 2d | **Safety advisor** (Gnani adapter, console fallback, honest provider status) | ✅ Built (live unverified) |
-| 3 | Gnani live credentials, voice input, final end-to-end hardening | In progress |
+| 2d | **Safety assistant** (verified Gnani STT contract, local intent, voice capture) | ✅ Built (live request unverified — no credentials) |
+| 3 | Gnani live credentials, live voice verification, final end-to-end hardening | In progress |
 | 4 | Wear OS companion, WhatsApp Business API, nearby relay, multi-language | Not started |
 
 ---

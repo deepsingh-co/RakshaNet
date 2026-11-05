@@ -25,12 +25,12 @@ flowchart LR
     subgraph api["Backend (Node.js + Express)"]
         A["REST /api/v1"]
         S["Socket.IO<br/>authenticated"]
-        AI["Safety advisor<br/>Gnani adapter"]
+        AI["Safety assistant<br/>Gnani STT + local intent"]
     end
 
     DB[("MongoDB")]
     NOTIFY["Notification gateways<br/>SMS / WhatsApp / push"]
-    GNANI["Gnani AI<br/>(live mode, unverified)"]
+    GNANI["Gnani Prisma v3.0<br/>speech-to-text"]
     EMERG["112 emergency services"]
 
     M -->|"HTTPS + JWT"| A
@@ -104,7 +104,7 @@ flowchart TB
 
     MONGO[("MongoDB<br/>users · incidents · locations<br/>notifications · contacts · links<br/>refresh tokens · audit logs")]
     PROV["SMS / WhatsApp / push"]
-    GNANI["Gnani AI"]
+    GNANI["Gnani Prisma v3.0<br/>speech-to-text"]
 
     NAV --> CTX
     CTX --> STORE
@@ -207,10 +207,23 @@ so one bad record cannot block the rest.
 
 ### 4.4 Safety assistant
 
-The assistant screen calls `POST /api/v1/ai/interpret` with Hinglish/English
-text. It renders the intent, severity, guidance, and a provider-truth badge.
-Every action (call 112, open SOS, report) stays user-confirmed. There is no
-speech-to-text or text-to-speech integration yet.
+The assistant supports voice and typed input.
+
+- **Voice:** `expo-audio` records up to 30 s. Android/iOS produce M4A; web
+  produces WebM, which `src/lib/voice.ts` decodes and re-encodes as mono 16 kHz
+  PCM WAV because Gnani does not accept WebM. The clip is uploaded as
+  multipart `audio` to `POST /api/v1/ai/transcribe`.
+- **Text:** `POST /api/v1/ai/interpret` classifies typed text.
+
+The backend sends audio to Gnani Prisma v3.0 (`POST
+https://api.vachana.ai/stt/v3`, header `X-API-Key-ID`), validates the response
+with Zod, then classifies the transcript locally against the fixed intent
+taxonomy. The screen shows the transcript, detected language, intent, severity,
+confidence, and a truthful “Gnani transcript · local intent” badge. Ambiguous
+results ask for confirmation; distress is never silently discarded. Every action
+(call 112, open SOS, report) stays user-confirmed. The assistant never creates an
+incident, never dispatches emergency services, and manual SOS remains available
+when voice fails.
 
 ---
 
@@ -228,7 +241,7 @@ speech-to-text or text-to-speech integration yet.
 | Notifications | `/notifications` | Delivery feed + signed provider webhook |
 | Analytics | `/analytics` | Role-scoped summary + capped CSV export |
 | Audit | `/audit` | Append-only admin reader |
-| Safety advisor | `/ai` | Provider status + Hinglish guidance (Gnani adapter) |
+| Safety assistant | `/ai` | Provider status, Gnani Prisma v3.0 STT, local intent classification |
 
 ### 5.2 Auth and roles
 
@@ -292,33 +305,77 @@ separately. CSV exports are role-scoped and capped at 5,000 rows.
 
 ---
 
-## 7. Gnani safety-guidance adapter
+## 7. Safety assistant: Gnani STT + local intent
 
 ```mermaid
 flowchart TD
-    C["Mobile: POST /ai/interpret"] --> V["Auth + validation<br/>text 2–1000 chars"]
-    V --> M{"AI_MODE"}
-    M -->|console| L["Deterministic local classifier"]
-    M -->|live| K{"GNANI_API_KEY + URL?"}
-    K -->|no| F["Local fallback<br/>degraded=true<br/>providerError=GNANI_NOT_CONFIGURED"]
-    K -->|yes| G["POST GNANI_API_URL<br/>Bearer + x-api-key<br/>timeout"]
-    G -->|ok| P["Parse intent/severity/reply<br/>fall back per missing field"]
-    G -->|error/timeout| F
-    L --> O["Response + simulated=true"]
-    P --> O2["Response + simulated=false"]
-    F --> O3["Response + simulated=true<br/>degraded=true"]
+    C["Mobile: audio clip"] --> U["POST /ai/transcribe<br/>multipart audio<br/>≤ 30 s, WAV/MP3/OGG/FLAC/AAC/M4A"]
+    U --> M{"AI_MODE + GNANI_API_KEY"}
+    M -->|console| E["503 AI_MODE_DISABLED<br/>manualSosAvailable=true"]
+    M -->|live, no key| E2["503 GNANI_NOT_CONFIGURED<br/>manualSosAvailable=true"]
+    M -->|live| G["POST https://api.vachana.ai/stt/v3<br/>X-API-Key-ID · model=prisma-v3.0<br/>language_code · format"]
+    G -->|ok| T["Zod-validate transcript response"]
+    G -->|401/429/504/5xx| P["Structured provider error<br/>no invented transcript"]
+    T --> I["Local deterministic intent classifier<br/>Zod-validated output"]
+    I --> R["Transcript + intent + honesty block"]
+    P --> H["Retry / type instead / manual SOS"]
 ```
 
-- The adapter never creates an incident and never dispatches emergency services.
-- `requiresConfirmation` is always `true`.
-- The raw message is not written to the audit log; only provider, mode, intent,
-  severity, and degradation flags are stored (`AI_INTERPRETED`).
-- Only text interpretation exists. Speech-to-text and text-to-speech are not
-  wired up.
-- **The live Gnani contract is unverified.** No credentials are present, so the
-  console classifier and fallback path are the tested paths. The expected request
-  and response shapes are documented in `backend/README.md` and can be adjusted
-  when real credentials and vendor documentation are available.
+### Verified contract
+
+Sources: <https://docs.gnani.ai/api/STT/speech-to-text> and
+<https://docs.gnani.ai/api/STT/models/prisma-v3>.
+
+- `POST https://api.vachana.ai/stt/v3`, `multipart/form-data`
+- Auth header `X-API-Key-ID` (not `Authorization`, not `x-api-key`)
+- Fields: `audio_file`, `model=prisma-v3.0`, `language_code`
+  (`indic-auto`, `hi-IN`, `en-IN`, `mr-IN`, …), `format`
+  (`verbatim|transcribe|codemix|transliterate`)
+- Success: `{ success, request_id, transcript, model,
+  detected_language_code?, processing_time?, end_to_end_latency?, truncated? }`
+- Empty transcript is a valid success response and is surfaced as
+  `EMPTY_TRANSCRIPT`, never as fake speech.
+- Errors: `400 {success:false,error:{type,message}}`,
+  `401 {detail:{error_code,message,status_code}}`, `422 {detail:[...]}`,
+  `429`, `504 {code:"UPSTREAM_TIMEOUT"}`
+- Audio: max 30 s, auto-converted to 16 kHz mono by Gnani.
+
+### Local intent, not a cloud intent claim
+
+Gnani documents speech-to-text, text-to-speech, and agent management — **no
+text-intent/chat endpoint**. Intent is therefore deterministic local logic:
+
+- Fixed taxonomy: `EMERGENCY_SOS`, `SHARE_LOCATION`, `START_JOURNEY`,
+  `CHECK_IN`, `CALL_CONTACT`, `CANCEL_SOS`, `GENERAL_HELP`, `UNKNOWN`.
+- Multilingual keyword scoring for Hindi, English, Marathi, and Hinglish.
+- Confidence ≥ `0.75` is actionable; below that the result is `ambiguous` and
+  needs confirmation; below `0.45` it is `UNKNOWN` unless distress vocabulary is
+  present, which escalates to `EMERGENCY_SOS` with a confirmation prompt.
+- Output is validated with Zod before serialization.
+- Response labels: `provider: "local-intent"`, `mode: "local"`,
+  `simulated: false` — real local logic, not a simulated cloud answer.
+
+### Safety boundaries
+
+- The assistant never creates an incident and never dispatches emergency
+  services. Emergencies reuse the existing incident/SOS workflow after the
+  user's confirmation.
+- Manual SOS stays available on every error path.
+- Uploaded audio is held in memory for one request and never written to disk or
+  MongoDB. Audit entries (`AI_TRANSCRIBED`, `AI_INTERPRETED`) store
+  provider/intent metadata, never the transcript or raw message.
+- `AI_MODE=live` without `GNANI_API_KEY` refuses to boot rather than silently
+  degrading.
+
+### Verification status
+
+The contract was checked against the official documentation and the request
+format/parsing/error mapping is covered by tests. **A real provider request has
+not succeeded in this environment** because `backend/.env` and `GNANI_API_KEY`
+are absent. The sanitised fixtures are docs-derived (`captured_live: false`) and
+are not evidence of a live call. Use `npm run gnani:smoke -- --audio <clip>` with
+real credentials to complete live verification.
+
 
 ---
 
@@ -369,8 +426,13 @@ numbers are masked in list/dashboard responses.
 | `OTP_MODE` | backend | `console` (dev) or `provider` |
 | `NOTIFICATION_MODE` | backend | `console` (labelled simulation) or `live` |
 | `NOTIFICATION_WEBHOOK_SECRET` | backend | HMAC verification |
-| `GNANI_API_KEY`, `GNANI_API_URL` | backend | Live AI adapter |
-| `AI_MODE` | backend | `console` or `live` |
+| `GNANI_API_KEY` | backend | Gnani Prisma v3.0 STT key (sent as `X-API-Key-ID`) |
+| `GNANI_STT_URL` | backend | Default `https://api.vachana.ai/stt/v3` |
+| `GNANI_STT_MODEL` | backend | `prisma-v3.0` (or `prisma-v2.5`) |
+| `GNANI_STT_LANGUAGE` | backend | `indic-auto` or a supported language code |
+| `GNANI_STT_FORMAT` | backend | `verbatim`, `transcribe`, `codemix`, `transliterate` |
+| `GNANI_TIMEOUT_MS` | backend | STT request timeout (default 20 s) |
+| `AI_MODE` | backend | `console` (local intent only) or `live` (Gnani STT) |
 | `VITE_API_URL` | dashboard | API base |
 | `EXPO_PUBLIC_API_URL` | mobile | API base |
 
@@ -378,8 +440,8 @@ Tests:
 
 | Suite | Command | Current result |
 |---|---|---|
-| Backend | `cd backend && npm test` | 58/58 passing |
-| Mobile logic | `cd mobile && npm test` | 32/32 passing |
+| Backend | `cd backend && npm test` | 74/74 passing |
+| Mobile logic | `cd mobile && npm test` | 39/39 passing |
 | Typecheck | both projects | clean |
 | Dashboard build | `cd dashboard && npm run build` | clean |
 
@@ -394,10 +456,19 @@ These are current limitations, not future promises:
 
 - **Notification providers are not configured.** Delivery is console-simulated
   (`0 delivered`); no real SMS/WhatsApp/push was sent or verified.
-- **Gnani live mode is untested.** No credentials or confirmed vendor contract.
-  The adapter is implemented and the console/fallback paths are tested.
-- **No voice pipeline.** There is no speech-to-text, text-to-speech, wake word,
-  or audio upload.
+- **A live Gnani STT request has not succeeded.** The request format, response
+  parsing, error mapping, and local intent engine are tested against the
+  published contract, but no `GNANI_API_KEY` was available. Fixtures are
+  docs-derived (`captured_live: false`), not live captures. Run
+  `npm run gnani:smoke -- --audio <clip>` with real credentials to close this.
+- **Voice was not exercised end-to-end.** Recording, permission handling,
+  WebM→WAV conversion, and multipart upload are implemented and unit-tested, but
+  no real microphone → Gnani run happened. Native M4A recording is unverified
+  without a native build. Web microphone access requires `localhost` or HTTPS.
+- **Intent classification is deterministic local logic**, not an LLM. It is
+  intentionally labelled `provider: "local-intent"` and `mode: "local"`; it can
+  miss unusual phrasing, which is why low confidence is marked ambiguous and
+  distress vocabulary forces escalation.
 - **No native device verification.** The mobile app was verified on Expo web;
   iOS/Android builds, store signing, and physical-device behavior are unverified.
 - **Background sync is limited.** Sync runs on start, network regain, foreground,

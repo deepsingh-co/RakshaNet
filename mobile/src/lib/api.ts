@@ -1,4 +1,5 @@
 import { clearRefreshToken, readRefreshToken, writeRefreshToken } from './storage';
+import type { VoiceUpload } from './voice';
 import type {
   ApiErrorPayload,
   AuthResponse,
@@ -12,6 +13,8 @@ import type {
   LocationInput,
   PublicUser,
   SafetyInterpretResponse,
+  SafetyStatusResponse,
+  SafetyTranscribeResponse,
   TrustedContact,
 } from '../types';
 
@@ -66,17 +69,23 @@ export function setUnauthorizedHandler(handler: (() => void) | null): void {
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
   body?: unknown;
+  /** Multipart body. When set, `body` is ignored and no JSON content type is sent. */
+  form?: FormData;
 }
 
 function doFetch(path: string, options: RequestOptions): Promise<Response> {
   const headers: Record<string, string> = { Accept: 'application/json' };
-  if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+  if (options.body !== undefined && !options.form) {
+    headers['Content-Type'] = 'application/json';
+  }
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
 
   return fetch(`${API_URL}${path}`, {
     method: options.method ?? 'GET',
     headers,
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
+    body:
+      options.form ??
+      (options.body === undefined ? undefined : JSON.stringify(options.body)),
   });
 }
 
@@ -410,12 +419,45 @@ export function createChildAccount(input: {
 }
 
 /* ------------------------------------------------------------------ */
-/* Safety advisor                                                     */
+/* Safety assistant                                                   */
 /* ------------------------------------------------------------------ */
+
+export function fetchSafetyStatus(): Promise<SafetyStatusResponse> {
+  return apiRequest('/ai/status');
+}
 
 export function interpretSafetyMessage(input: {
   text: string;
-  language?: 'auto' | 'en' | 'hi' | 'hinglish';
+  language?: 'auto' | 'en' | 'hi' | 'hinglish' | string;
 }): Promise<SafetyInterpretResponse> {
   return apiRequest('/ai/interpret', { method: 'POST', body: input });
+}
+
+/**
+ * Upload one short clip for Gnani Prisma v3.0 transcription.
+ *
+ * Web sends a Blob (already converted to WAV by lib/voice). React Native sends
+ * the recorder's file URI using the standard multipart file descriptor, so the
+ * audio is streamed rather than loaded into JS memory twice.
+ */
+export function transcribeSafetyAudio(
+  upload: VoiceUpload,
+  language = 'auto',
+): Promise<SafetyTranscribeResponse> {
+  const form = new FormData();
+  if (upload.kind === 'blob') {
+    form.append('audio', upload.blob, upload.filename);
+  } else {
+    form.append(
+      'audio',
+      {
+        uri: upload.uri,
+        name: upload.filename,
+        type: upload.mimeType,
+      } as unknown as Blob,
+    );
+  }
+  form.append('language', language);
+
+  return apiRequest('/ai/transcribe', { method: 'POST', form });
 }

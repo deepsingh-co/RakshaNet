@@ -225,39 +225,107 @@ Returns `notifications` (destinations always masked), a `summary` with
   (`id`, `fullName`, `email`, `phoneMasked`, `role`, `accountType`) so the command center
   can show who is in danger without exposing full phone numbers.
 
-## Safety advisor API (Module 7 — Gnani adapter)
+## Safety assistant API (Module 7 — Gnani Prisma v3.0 STT + local intent)
 
-Text/transcript safety guidance. The adapter does **not** create incidents and
-does **not** dispatch emergency services; the app must confirm a real SOS.
+The assistant does **not** create incidents and does **not** dispatch emergency
+services. Emergency actions still reuse the existing incident/SOS flow and need
+the user's confirmation. Gnani exposes speech-to-text (and TTS), but **no
+text-intent/chat endpoint** — so intent is classified locally and labelled as
+such.
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| GET | `/api/v1/ai/status` | user | Provider mode, configuration presence, and honesty flags (no secrets) |
-| POST | `/api/v1/ai/interpret` | user | Classify a Hinglish message and return guidance; raw text is not audited |
+| GET | `/api/v1/ai/status` | user | Provider mode, configuration presence, capability and honesty flags (no secrets) |
+| POST | `/api/v1/ai/interpret` | user | Classify typed text locally; raw text is not audited |
+| POST | `/api/v1/ai/transcribe` | user | `multipart/form-data` audio upload → Gnani STT → local intent |
 
 ```json
 POST /api/v1/ai/interpret
 { "text": "Koi mujhe follow kar raha hai", "language": "auto" }
 ```
 
-The response contains `intent`, `severity`, `confidence`, a Hinglish `reply`,
-`suggestedAction`, `requiresConfirmation: true`, and provider metadata
-(`provider`, `mode`, `simulated`, `degraded`, optional `providerError`).
+```bash
+curl -X POST http://localhost:4000/api/v1/ai/transcribe \
+  -H "Authorization: Bearer <access-token>" \
+  -F audio=@sample.wav \
+  -F language=auto
+```
 
-- `AI_MODE=console` (default in development/test) uses a deterministic local
-  classifier and returns `simulated: true`.
-- `AI_MODE=live` POSTs `{ text, language, session_id, context }` to
-  `GNANI_API_URL` with `Authorization: Bearer <GNANI_API_KEY>` and expects
-  `{ intent, severity, confidence, reply|response|answer }`.
-- The live Gnani contract is **not verified** here: no credentials are present.
-  On missing credentials, timeout, non-2xx, or a malformed body, the route falls
-  back to the local classifier with `degraded: true` and a `providerError` code.
-  It never pretends Gnani answered.
-- Only text interpretation is implemented. Speech-to-text and text-to-speech are
-  **not** wired up, so this must not be described as voice input yet.
-- `POST /ai/interpret` is rate-limited (60/min) and audited as
-  `AI_INTERPRETED`; the audit detail stores intent/severity/provider metadata,
-  never the user's message.
+### Verified Gnani contract
+
+Source: <https://docs.gnani.ai/api/STT/speech-to-text> and
+<https://docs.gnani.ai/api/STT/models/prisma-v3>.
+
+- `POST https://api.vachana.ai/stt/v3`, `multipart/form-data`
+- Auth header `X-API-Key-ID: <key>` (not `Authorization`, not `x-api-key`)
+- Fields: `audio_file` (required), `model=prisma-v3.0`, `language_code`
+  (`indic-auto`, `hi-IN`, `en-IN`, `mr-IN`, …), `format`
+  (`verbatim|transcribe|codemix|transliterate`)
+- Success body: `{ success, request_id, transcript, model,
+  detected_language_code?, processing_time?, end_to_end_latency?, truncated? }`
+  — an empty `transcript` is a valid success response
+- Audio: max 30 s, WAV/MP3/OGG/FLAC/AAC/M4A, auto-converted to 16 kHz mono
+- Documented errors: `400 {success:false,error:{type,message}}`,
+  `401 {detail:{error_code,message,status_code}}`, `422 {detail:[...]}`,
+  `429`, `504 {code:"UPSTREAM_TIMEOUT"}`
+
+### Response and honesty rules
+
+`/ai/interpret` returns a Zod-validated `interpretation` with `intent`,
+`severity`, `confidence`, `reply`, `action`, `ambiguous`,
+`requiresConfirmation`, `language`, `provider: "local-intent"`,
+`mode: "local"`, `simulated: false`.
+
+`/ai/transcribe` additionally returns `transcription` (`provider: "gnani"`,
+real `request_id`, model, transcript, detected language) and an `honesty`
+block with `autoDispatch: false`, `autoIncidentCreation: false`,
+`requiresConfirmation`, and `manualSosAvailable: true`.
+
+- The intent taxonomy is fixed: `EMERGENCY_SOS`, `SHARE_LOCATION`,
+  `START_JOURNEY`, `CHECK_IN`, `CALL_CONTACT`, `CANCEL_SOS`, `GENERAL_HELP`,
+  `UNKNOWN`.
+- Confidence is scored locally. Below `0.75` the result is `ambiguous`; below
+  `0.45` it becomes `UNKNOWN` **unless** distress vocabulary is present, in
+  which case it is escalated to `EMERGENCY_SOS` with a confirmation prompt.
+  Distress is never silently discarded.
+- `AI_MODE=console` (default in development/test) disables Gnani STT. Text
+  interpretation still works locally and is **not** labelled simulated, because
+  it is real local logic — not a fake cloud answer.
+- `AI_MODE=live` requires `GNANI_API_KEY`; the backend refuses to boot without
+  it rather than silently degrading.
+- Provider failures return structured codes (`AI_MODE_DISABLED`,
+  `GNANI_AUTH_FAILED`, `GNANI_TIMEOUT`, `GNANI_UNAVAILABLE`,
+  `GNANI_UNSUPPORTED_AUDIO`, `EMPTY_TRANSCRIPT`, …) with
+  `manualSosAvailable: true`. The API never invents a transcript.
+- `AI_MODE=console` refuses to call Gnani even if a key is present, so a
+  development server cannot make surprise billable requests. `AI_MODE=live` is
+  required for `/ai/transcribe`.
+- Uploaded audio is held in memory only, forwarded once, and never written to
+  disk or the database. Auditing stores provider/intent metadata, never the
+  transcript.
+- Rate-limited to 60 requests/min per client (effectively unlimited in tests).
+
+### Live speech-to-text smoke test
+
+```bash
+# backend/.env: GNANI_API_KEY=<real key>, AI_MODE=live
+npm run gnani:smoke -- --audio ./sample.wav
+npm run gnani:smoke -- --audio ./sample.wav --language hi-IN
+```
+
+The script transcribes one clip, prints a sanitised result plus the local
+intent, and exits non-zero on any provider error. It never creates an incident,
+sends an alert, or prints the API key. Without `GNANI_API_KEY` it exits with a
+clear "not configured / unverified" error.
+
+### Sanitised fixtures
+
+`src/fixtures/gnani-stt-prisma-v3.success.json` and
+`...auth-error.json` mirror the documented response shapes. Both carry
+`"captured_live": false`; they are contract fixtures, **not** evidence of a
+successful live call. Replace the success fixture with a redacted live response
+after running the smoke test.
+
 
 ### Admin provisioning
 
