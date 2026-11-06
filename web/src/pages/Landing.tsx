@@ -160,7 +160,7 @@ export default function Landing() {
       {/* ── Navigation ─────────────────────────────────────────────── */}
       <header className="lp-nav">
         <div className="lp-container flex h-[76px] items-center justify-between gap-4">
-          <Link to="/" className="lp-logo-link flex items-center gap-3" aria-label="RakshaNet home">
+          <Link to="/" className="lp-logo-link flex items-center gap-3">
             <span className="lp-logo">
               <ShieldCheck className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
               <span className="lp-logo-dot" aria-hidden="true" />
@@ -182,26 +182,32 @@ export default function Landing() {
           </nav>
 
           <div className="flex items-center gap-2">
-            <Link to="/login" className="lp-btn lp-btn-ghost lp-btn-sm hidden sm:inline-flex">
-              Sign in
-            </Link>
-            <Link to="/register" className="lp-btn lp-btn-primary lp-btn-sm hidden sm:inline-flex">
-              Create account
-            </Link>
-            <button
-              type="button"
-              className="lp-btn lp-btn-ghost lp-btn-icon lg:hidden"
-              onClick={() => setMenuOpen((open) => !open)}
-              aria-expanded={menuOpen}
-              aria-controls="lp-mobile-nav"
-              aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
-            >
-              {menuOpen ? (
-                <X className="h-5 w-5" aria-hidden="true" />
-              ) : (
-                <Menu className="h-5 w-5" aria-hidden="true" />
-              )}
-            </button>
+            <span className="hidden sm:inline-flex">
+              <Link to="/login" className="lp-btn lp-btn-ghost lp-btn-sm">
+                Sign in
+              </Link>
+            </span>
+            <span className="hidden sm:inline-flex">
+              <Link to="/register" className="lp-btn lp-btn-primary lp-btn-sm">
+                Create account
+              </Link>
+            </span>
+            <span className="inline-flex lg:hidden">
+              <button
+                type="button"
+                className="lp-btn lp-btn-ghost lp-btn-icon"
+                onClick={() => setMenuOpen((open) => !open)}
+                aria-expanded={menuOpen}
+                aria-controls="lp-mobile-nav"
+                aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+              >
+                {menuOpen ? (
+                  <X className="h-5 w-5" aria-hidden="true" />
+                ) : (
+                  <Menu className="h-5 w-5" aria-hidden="true" />
+                )}
+              </button>
+            </span>
           </div>
         </div>
 
@@ -639,7 +645,7 @@ export default function Landing() {
         <div className="lp-container py-12">
           <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr]">
             <div>
-              <Link to="/" className="flex items-center gap-3" aria-label="RakshaNet home">
+              <Link to="/" className="flex items-center gap-3">
                 <span className="lp-logo">
                   <ShieldCheck className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
                   <span className="lp-logo-dot" aria-hidden="true" />

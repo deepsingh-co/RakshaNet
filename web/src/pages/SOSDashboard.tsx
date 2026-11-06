@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Siren, Mic, Smartphone, Watch, Calculator, Volume2, Video, ShieldCheck,
-  Phone, MessageSquare, Send, Flashlight, Camera, Radio, Trash2, Plus, UserPlus, Sparkles,
+  Phone, MessageSquare, Send, Flashlight, Camera, Radio, Trash2, Plus, UserPlus,
 } from "lucide-react";
 import SOSButton from "../components/SOSButton";
 import { useSafetyStore } from "../store/safetyStore";
