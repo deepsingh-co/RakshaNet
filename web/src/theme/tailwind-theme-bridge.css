@@ -1,0 +1,66 @@
+/**
+ * AEGIS Tailwind Theme Bridge
+ * ──────────────────────────────────────────────────────────────────────
+ * Tailwind v4 reads colors from this @theme block at BUILD time and
+ * generates utility classes (bg-theme-primary, text-theme-accent, etc.)
+ * that reference CSS custom properties at RUNTIME.
+ *
+ * This means: once compiled, classes like `bg-theme-primary/20` will
+ * always resolve to whatever `--aegis-primary` currently is — and
+ * ThemeProvider changes `--aegis-primary` live, with zero rebuild.
+ *
+ * This file must be imported BEFORE any component CSS, normally via
+ * an @import at the top of index.css (see INTEGRATION_GUIDE.md).
+ *
+ * Available semantic utility classes after this is loaded:
+ *   bg-theme-primary       text-theme-primary       border-theme-primary
+ *   bg-theme-primary-hover text-theme-primary-hover border-theme-primary-hover
+ *   bg-theme-secondary     text-theme-secondary     border-theme-secondary
+ *   bg-theme-accent        text-theme-accent        border-theme-accent
+ *   bg-theme-success       text-theme-success       border-theme-success
+ *   bg-theme-warning       text-theme-warning       border-theme-warning
+ *   bg-theme-danger        text-theme-danger        border-theme-danger
+ *   bg-theme-info          text-theme-info          border-theme-info
+ *   bg-theme-surface       text-theme-surface       border-theme-surface
+ *   bg-theme-card          text-theme-card          border-theme-card
+ *   bg-theme-bg            text-theme-bg            border-theme-bg
+ *   text-theme-text        text-theme-text-secondary text-theme-text-muted
+ *   border-theme-border    border-theme-border-strong
+ *
+ * Opacity modifiers work normally: bg-theme-primary/20, border-theme-accent/30, etc.
+ * because Tailwind v4 generates each as a real color token (not a raw
+ * `var()` strings), so the /NN opacity suffix is supported out of the box.
+ */
+@theme {
+    --color-theme-primary: var(--aegis-primary);
+    --color-theme-primary-hover: var(--aegis-primary-hover);
+    --color-theme-secondary: var(--aegis-secondary);
+    --color-theme-accent: var(--aegis-accent);
+
+    --color-theme-bg: var(--aegis-bg);
+    --color-theme-bg-alt: var(--aegis-bg-alt);
+    --color-theme-surface: var(--aegis-surface);
+    --color-theme-surface-alt: var(--aegis-surface-alt);
+    --color-theme-card: var(--aegis-card);
+    --color-theme-card-hover: var(--aegis-card-hover);
+
+    --color-theme-text: var(--aegis-text-primary);
+    --color-theme-text-secondary: var(--aegis-text-secondary);
+    --color-theme-text-muted: var(--aegis-text-muted);
+
+    --color-theme-border: var(--aegis-border);
+    --color-theme-border-strong: var(--aegis-border-strong);
+
+    --color-theme-success: var(--aegis-success);
+    --color-theme-warning: var(--aegis-warning);
+    --color-theme-danger: var(--aegis-danger);
+    --color-theme-info: var(--aegis-info);
+    --color-theme-violet: var(--aegis-violet);
+
+    --color-theme-chart-1: var(--aegis-chart-1);
+    --color-theme-chart-2: var(--aegis-chart-2);
+    --color-theme-chart-3: var(--aegis-chart-3);
+    --color-theme-chart-4: var(--aegis-chart-4);
+    --color-theme-chart-5: var(--aegis-chart-5);
+    --color-theme-chart-6: var(--aegis-chart-6);
+}

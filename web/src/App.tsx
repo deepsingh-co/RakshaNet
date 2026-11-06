@@ -1,252 +1,97 @@
-import { lazy, Suspense } from 'react';
-import { HashRouter, Link, NavLink, Navigate, Route, Routes } from 'react-router-dom';
-import { WomenEmpowermentPortal } from './portal/WomenEmpowermentPortal';
-import { SosScreen } from './features/sos/SosScreen';
-import { ContactsScreen } from './features/contacts/ContactsScreen';
-import { HistoryScreen } from './features/history/HistoryScreen';
-import { EventDetailScreen } from './features/history/EventDetailScreen';
-import { SettingsScreen } from './features/settings/SettingsScreen';
-import { LoginScreen } from './features/auth/LoginScreen';
-import { SignupScreen } from './features/auth/SignupScreen';
-import { AboutPage } from './site/AboutPage';
-import { PrivacyPage } from './site/PrivacyPage';
-import { ContactPage } from './site/ContactPage';
-import { NoticeBar } from './components/NoticeBar';
-import { OfflineBadge } from './components/OfflineBadge';
-import { FloatingSos } from './components/FloatingSos';
-import { useAuth } from './store/authStore';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useEffect } from "react";
+import Layout from "./components/Layout";
+import Landing from "./pages/Landing";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+import SOSDashboard from "./pages/SOSDashboard";
+import LiveTracking from "./pages/LiveTracking";
+import Heatmap from "./pages/Heatmap";
+import CommunityReports from "./pages/CommunityReports";
+import AICopilot from "./pages/AICopilot";
+import GuardianPortal from "./pages/GuardianPortal";
+import AdminCommandCenter from "./pages/AdminCommandCenter";
+import FeaturesHub from "./pages/features/FeaturesHub";
+import DeepfakeWeb from "./pages/features/DeepfakeWeb";
+import CompanionWeb from "./pages/features/CompanionWeb";
+import StalkerWeb from "./pages/features/StalkerWeb";
+import MeshWeb from "./pages/features/MeshWeb";
+import PodsWeb from "./pages/features/PodsWeb";
+import BystanderWeb from "./pages/features/BystanderWeb";
+import BlockchainWeb from "./pages/features/BlockchainWeb";
+import BiometricWeb from "./pages/features/BiometricWeb";
+import WearablesWeb from "./pages/features/WearablesWeb";
+import VitalsPage from "./pages/vitals/VitalsPage";
+import WalkWeb from "./pages/features/WalkWeb";
+import TraumaWeb from "./pages/features/TraumaWeb";
+import LegalWeb from "./pages/features/LegalWeb";
+import VoiceCodeWeb from "./pages/features/VoiceCodeWeb";
+import SafeRideWeb from "./pages/features/SafeRideWeb";
+import SafeJourney from "./pages/SafeJourney";
+import { useSafetyStore } from "./store/safetyStore";
 
-// The advanced feature lab is lazy-loaded so its dependencies (framer-motion,
-// lucide-react, axios) never weigh down the offline SOS first load.
-const AdvancedLayout = lazy(() =>
-  import('./features/advanced/AdvancedLayout').then((m) => ({ default: m.AdvancedLayout })),
-);
-const FeaturesHub = lazy(() => import('./features/advanced/pages/FeaturesHub'));
-const DeepfakeWeb = lazy(() => import('./features/advanced/pages/DeepfakeWeb'));
-const CompanionWeb = lazy(() => import('./features/advanced/pages/CompanionWeb'));
-const StalkerWeb = lazy(() => import('./features/advanced/pages/StalkerWeb'));
-const MeshWeb = lazy(() => import('./features/advanced/pages/MeshWeb'));
-const PodsWeb = lazy(() => import('./features/advanced/pages/PodsWeb'));
-const BystanderWeb = lazy(() => import('./features/advanced/pages/BystanderWeb'));
-const BlockchainWeb = lazy(() => import('./features/advanced/pages/BlockchainWeb'));
-const BiometricWeb = lazy(() => import('./features/advanced/pages/BiometricWeb'));
-const WearablesWeb = lazy(() => import('./features/advanced/pages/WearablesWeb'));
-const WalkWeb = lazy(() => import('./features/advanced/pages/WalkWeb'));
-const TraumaWeb = lazy(() => import('./features/advanced/pages/TraumaWeb'));
-const LegalWeb = lazy(() => import('./features/advanced/pages/LegalWeb'));
-const VoiceCodeWeb = lazy(() => import('./features/advanced/pages/VoiceCodeWeb'));
-const SafeRideWeb = lazy(() => import('./features/advanced/pages/SafeRideWeb'));
-const VitalsUnavailable = lazy(() => import('./features/advanced/pages/VitalsUnavailable'));
-
-function FeatureLoading() {
-  return (
-    <div className="grid min-h-screen place-items-center bg-[#05060f] px-4 text-center text-sm text-slate-400">
-      Loading feature lab…
-    </div>
-  );
+function GlobalTicker() {
+  const tick = useSafetyStore((s) => s.tick);
+  useEffect(() => {
+    const id = setInterval(tick, 2500);
+    return () => clearInterval(id);
+  }, [tick]);
+  return null;
 }
-
-const TABS = [
-  { to: '/', label: 'SOS', icon: SosIcon, end: true },
-  { to: '/contacts', label: 'Contacts', icon: ContactsIcon },
-  { to: '/history', label: 'History', icon: HistoryIcon },
-  { to: '/settings', label: 'Settings', icon: SettingsIcon },
-];
 
 export default function App() {
   return (
-    <HashRouter>
+    <BrowserRouter>
+      <GlobalTicker />
       <Routes>
-        {/* Main Comprehensive Women Empowerment & Safety Portal matching reference */}
-        <Route path="/" element={<WomenEmpowermentPortal />} />
-        <Route path="/portal/*" element={<WomenEmpowermentPortal />} />
-
-        {/* Public static pages — no login required. */}
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/privacy" element={<PrivacyPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-
-        {/* Auth screens */}
-        <Route path="/login" element={<LoginScreen />} />
-        <Route path="/signup" element={<SignupScreen />} />
-
-        {/* Advanced feature lab: real UI, demo backends clearly labelled. */}
-        <Route
-          path="/features"
-          element={
-            <RequireAuth>
-              <Suspense fallback={<FeatureLoading />}>
-                <AdvancedLayout />
-              </Suspense>
-            </RequireAuth>
-          }
-        >
-          <Route index element={<FeaturesHub />} />
-          <Route path="deepfake" element={<DeepfakeWeb />} />
-          <Route path="companion" element={<CompanionWeb />} />
-          <Route path="stalker" element={<StalkerWeb />} />
-          <Route path="mesh" element={<MeshWeb />} />
-          <Route path="pods" element={<PodsWeb />} />
-          <Route path="bystander" element={<BystanderWeb />} />
-          <Route path="blockchain" element={<BlockchainWeb />} />
-          <Route path="biometric" element={<BiometricWeb />} />
-          <Route path="wearables" element={<WearablesWeb />} />
-          <Route path="wearables/vitals" element={<VitalsUnavailable />} />
-          <Route path="walk" element={<WalkWeb />} />
-          <Route path="trauma" element={<TraumaWeb />} />
-          <Route path="legal" element={<LegalWeb />} />
-          <Route path="voicecode" element={<VoiceCodeWeb />} />
-          <Route path="saferide" element={<SafeRideWeb />} />
-          <Route path="*" element={<Navigate to="/features" replace />} />
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/app" element={<Layout />}>
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="sos" element={<SOSDashboard />} />
+          <Route path="tracking" element={<LiveTracking />} />
+          <Route path="heatmap" element={<Heatmap />} />
+          <Route path="community" element={<CommunityReports />} />
+          <Route path="ai" element={<AICopilot />} />
+          <Route path="guardian" element={<GuardianPortal />} />
+          <Route path="admin" element={<AdminCommandCenter />} />
+          <Route path="features" element={<FeaturesHub />} />
+          <Route path="features/deepfake" element={<DeepfakeWeb />} />
+          <Route path="features/companion" element={<CompanionWeb />} />
+          <Route path="features/stalker" element={<StalkerWeb />} />
+          <Route path="features/mesh" element={<MeshWeb />} />
+          <Route path="features/pods" element={<PodsWeb />} />
+          <Route path="features/bystander" element={<BystanderWeb />} />
+          <Route path="features/blockchain" element={<BlockchainWeb />} />
+          <Route path="features/biometric" element={<BiometricWeb />} />
+          <Route path="features/wearables" element={<WearablesWeb />} />
+          <Route path="features/wearables/vitals" element={<VitalsPage />} />
+          <Route path="features/walk" element={<WalkWeb />} />
+          <Route path="features/trauma" element={<TraumaWeb />} />
+          <Route path="features/legal" element={<LegalWeb />} />
+          <Route path="features/voicecode" element={<VoiceCodeWeb />} />
+          <Route path="features/saferide" element={<SafeRideWeb />} />
+          <Route path="journey" element={<SafeJourney />} />
+          {/* Guardian routes (redirect to main guardian portal) */}
+          <Route path="guardian/wards" element={<GuardianPortal />} />
+          <Route path="guardian/tracking" element={<LiveTracking />} />
+          <Route path="guardian/alerts" element={<GuardianPortal />} />
+          <Route path="guardian/history" element={<GuardianPortal />} />
+          <Route path="guardian/contacts" element={<GuardianPortal />} />
+          <Route path="guardian/settings" element={<GuardianPortal />} />
+          {/* Admin routes (redirect to main admin center) */}
+          <Route path="admin/users" element={<AdminCommandCenter />} />
+          <Route path="admin/incidents" element={<AdminCommandCenter />} />
+          <Route path="admin/analytics" element={<Heatmap />} />
+          <Route path="admin/reports" element={<CommunityReports />} />
+          <Route path="admin/system" element={<AdminCommandCenter />} />
+          <Route path="admin/settings" element={<AdminCommandCenter />} />
         </Route>
-
-        {/* Field Offline SOS Mode */}
-        <Route
-          path="/offline-sos/*"
-          element={
-            <RequireAuth>
-              <AppShell />
-            </RequireAuth>
-          }
-        />
-        <Route
-          path="/sos/*"
-          element={
-            <RequireAuth>
-              <AppShell />
-            </RequireAuth>
-          }
-        />
-
-        {/* Fallback to portal */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </HashRouter>
-  );
-}
-
-/**
- * Gate: no session → send to login. On first run the auth state must load
- * from storage before we decide, so we render nothing until `loaded`.
- */
-function RequireAuth({ children }: { children: React.ReactNode }) {
-  const session = useAuth((s) => s.session);
-  const loaded = useAuth((s) => s.loaded);
-
-  if (!loaded) {
-    return (
-      <div className="flex h-full items-center justify-center text-sm text-ink-faint">
-        Loading…
-      </div>
-    );
-  }
-  if (!session) return <Navigate to="/login" replace />;
-  return <>{children}</>;
-}
-
-function AppShell() {
-  const name = useAuth((s) => s.session?.name);
-
-  return (
-    <div className="mx-auto flex h-full max-w-lg flex-col">
-      <header className="flex items-center justify-between border-b border-line bg-card px-4 py-3">
-        <div className="flex items-center gap-2">
-          <span className="inline-flex size-7 items-center justify-center rounded-lg bg-brand" aria-hidden>
-            <svg className="size-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M12 2 4 6v6c0 5 3.4 8.4 8 10 4.6-1.6 8-5 8-10V6l-8-4Z" />
-            </svg>
-          </span>
-          <div>
-            <h1 className="text-base font-bold leading-tight text-ink">
-              {name ? `Hi, ${name}` : 'RakshaNet'}
-            </h1>
-            <p className="text-[11px] leading-tight text-ink-faint">Safety, even offline</p>
-          </div>
-        </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Link
-            to="/features"
-            className="hidden rounded-full border border-line px-3 py-1 text-[11px] font-semibold text-ink-soft transition hover:border-line-strong hover:text-ink sm:inline-flex"
-          >
-            Features
-          </Link>
-          <OfflineBadge />
-        </div>
-      </header>
-
-      <NoticeBar />
-
-      <main className="min-h-0 flex-1 overflow-y-auto px-4 py-4 pb-24">
-        <Routes>
-          <Route path="/" element={<SosScreen />} />
-          <Route path="/contacts" element={<ContactsScreen />} />
-          <Route path="/history" element={<HistoryScreen />} />
-          <Route path="/history/:id" element={<EventDetailScreen />} />
-          <Route path="/settings" element={<SettingsScreen />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </main>
-
-      <nav className="fixed inset-x-0 bottom-0 mx-auto max-w-lg border-t border-line bg-card/95 backdrop-blur">
-        <ul className="grid grid-cols-4">
-          {TABS.map(({ to, label, icon: Icon, end }) => (
-            <li key={to}>
-              <NavLink
-                to={to}
-                end={end}
-                className={({ isActive }) =>
-                  `flex flex-col items-center gap-0.5 py-2.5 text-[11px] ${
-                    isActive ? 'font-semibold text-brand' : 'text-ink-soft'
-                  }`
-                }
-              >
-                <Icon className="size-5" />
-                {label}
-              </NavLink>
-            </li>
-          ))}
-        </ul>
-      </nav>
-
-      <FloatingSos />
-    </div>
-  );
-}
-
-type IconProps = { className?: string };
-
-function SosIcon({ className }: IconProps) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <path d="M12 2 4 6v6c0 5 3.4 8.4 8 10 4.6-1.6 8-5 8-10V6l-8-4Z" />
-      <path d="M12 8v4M12 16h.01" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function ContactsIcon({ className }: IconProps) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <circle cx="9" cy="8" r="3.5" />
-      <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5c2 .9 3 2.6 3 5.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function HistoryIcon({ className }: IconProps) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7v5l3 3" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function SettingsIcon({ className }: IconProps) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z" />
-    </svg>
+    </BrowserRouter>
   );
 }

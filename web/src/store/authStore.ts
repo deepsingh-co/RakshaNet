@@ -1,149 +1,124 @@
-import { create } from 'zustand';
-
 /**
- * Device-local auth.
- *
- * IMPORTANT / HONEST DESIGN:
- * There is no backend yet, so accounts live only on this device
- * (localStorage) and passwords are stored as a SHA-256 hash. This is
- * NOT real security — it is a local gate + a placeholder for the real
- * backend auth (M4: Node/Express + MongoDB) in PLAN.md. It exists so the
- * flow (landing → signup/login → app) and UX are real and testable
- * offline, and so we never silently claim cloud auth we don't have.
+ * Auth store — extended to call the real backend when available.
+ * Falls back to in-memory demo auth when no backend is configured.
  */
+import { create } from "zustand";
+import { authApi, isBackendAvailable } from "../api/endpoints";
 
-const STORAGE_KEY = 'rakshanet.auth.v1';
+export type Role = "USER" | "GUARDIAN" | "ADMIN" | "POLICE";
 
-export interface Account {
-  name: string;
-  /** email or phone — used to identify the account */
-  contact: string;
-  /** SHA-256 hex of the password (device-local, not real security) */
-  passwordHash: string;
-  createdAt: number;
-}
-
-/** Currently signed-in user (never persisted beyond the stored account). */
-export interface Session {
-  name: string;
-  contact: string;
-  signedInAt: number;
-}
-
-interface StoredAuth {
-  account: Account | null;
-  session: Session | null;
-}
-
-const EMPTY: StoredAuth = { account: null, session: null };
-
-function read(): StoredAuth {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return EMPTY;
-    const parsed = JSON.parse(raw) as Partial<StoredAuth>;
-    return { account: parsed.account ?? null, session: parsed.session ?? null };
-  } catch {
-    return EMPTY;
-  }
-}
-
-function write(state: StoredAuth): StoredAuth {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  } catch {
-    /* storage full or blocked — session just won't persist */
-  }
-  return state;
-}
-
-/** SHA-256 → hex. Uses SubtleCrypto (needs https or localhost). */
-async function hashPassword(password: string): Promise<string> {
-  const subtle = globalThis.crypto?.subtle;
-  if (!subtle) {
-    // Extremely old/insecure context — fall back to a trivial (NOT secure) hash
-    // so the flow still works. Never used for real security either way.
-    let h = 0;
-    for (let i = 0; i < password.length; i++) h = (h * 31 + password.charCodeAt(i)) | 0;
-    return `fallback:${h}`;
-  }
-  const data = new TextEncoder().encode(password);
-  const digest = await subtle.digest('SHA-256', data);
-  return Array.from(new Uint8Array(digest))
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
-
-export interface AuthResult {
-  ok: boolean;
-  error?: string;
+export interface RegisterExtra {
+  bloodGroup?: string;
+  medicalInfo?: string;
+  stealthPin?: string;
+  relationType?: string;
+  organization?: string;
+  badgeId?: string;
+  jurisdiction?: string;
+  contacts?: { name: string; relation: string; phone: string }[];
 }
 
 interface AuthState {
-  account: Account | null;
-  session: Session | null;
-  loaded: boolean;
-  load: () => void;
-  signup: (input: {
-    name: string;
-    contact: string;
-    password: string;
-  }) => Promise<AuthResult>;
-  login: (contact: string, password: string) => Promise<AuthResult>;
+  user: { id?: string; name: string; email: string; role: Role; accessToken?: string } | null;
+  loading: boolean;
+  error: string | null;
+  login: (email: string, password: string, role?: Role) => Promise<void>;
+  register: (input: {
+    fullName: string; email: string; password: string;
+    phone?: string; role?: Role; extra?: RegisterExtra;
+  }) => Promise<void>;
   logout: () => void;
 }
 
-export const useAuth = create<AuthState>((set, get) => ({
-  account: null,
-  session: null,
-  loaded: false,
+export const useAuthStore = create<AuthState>((set) => ({
+  user: (() => {
+    try {
+      const stored = localStorage.getItem("aegis_user");
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.accessToken && !localStorage.getItem("aegis:access_token")) {
+          localStorage.setItem("aegis:access_token", parsed.accessToken);
+        }
+        return parsed;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  })(),
+  loading: false,
+  error: null,
 
-  load: () => {
-    const { account, session } = read();
-    set({ account, session, loaded: true });
+  login: async (email, password, role = "USER") => {
+    set({ loading: true, error: null });
+    if (isBackendAvailable()) {
+      try {
+        const data = await authApi.login(email, password);
+        const loggedUser = {
+          id: data.userId, name: data.fullName, email: data.email,
+          role: data.role, accessToken: data.accessToken,
+        };
+        localStorage.setItem("aegis:access_token", data.accessToken);
+        localStorage.setItem("aegis:refresh_token", data.refreshToken);
+        localStorage.setItem("aegis_user", JSON.stringify(loggedUser));
+        set({
+          user: loggedUser,
+          loading: false,
+          error: null
+        });
+        return;
+      } catch (e: any) {
+        const errMsg = e?.response?.data?.message || e?.message || "Backend login failed";
+        console.warn("[auth] backend login failed, falling back to demo:", errMsg);
+        set({ error: `Backend login failed: ${errMsg}. Using offline demo fallback.` });
+      }
+    }
+    const name = email.split("@")[0].replace(/\./g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+    const demoUser = { name, email, role };
+    localStorage.setItem("aegis_user", JSON.stringify(demoUser));
+    set({ user: demoUser, loading: false });
   },
 
-  signup: async ({ name, contact, password }) => {
-    if (get().account) {
-      return { ok: false, error: 'An account already exists on this device. Log in instead.' };
+  register: async ({ fullName, email, password, phone, role = "USER", extra }) => {
+    set({ loading: true, error: null });
+    if (isBackendAvailable()) {
+      try {
+        const data = await authApi.register({
+          fullName, email, password, phone,
+          role: role === "POLICE" ? "USER" : role,
+          bloodGroup: extra?.bloodGroup,
+          medicalInfo: extra?.medicalInfo,
+          stealthPin: extra?.stealthPin,
+        });
+        const registeredUser = {
+          id: data.userId, name: data.fullName, email: data.email,
+          role: data.role, accessToken: data.accessToken,
+        };
+        localStorage.setItem("aegis:access_token", data.accessToken);
+        localStorage.setItem("aegis:refresh_token", data.refreshToken);
+        localStorage.setItem("aegis_user", JSON.stringify(registeredUser));
+        set({
+          user: registeredUser,
+          loading: false,
+          error: null
+        });
+        return;
+      } catch (e: any) {
+        const errMsg = e?.response?.data?.message || e?.message || "Backend registration failed";
+        console.warn("[auth] backend register failed, falling back to demo:", errMsg);
+        set({ error: `Backend registration failed: ${errMsg}. Using offline demo fallback.` });
+      }
     }
-    if (!name.trim()) return { ok: false, error: 'Please enter your name.' };
-    if (!contact.trim()) return { ok: false, error: 'Please enter an email or phone.' };
-    if (password.length < 4) return { ok: false, error: 'Password must be at least 4 characters.' };
-
-    const passwordHash = await hashPassword(password);
-    const account: Account = {
-      name: name.trim(),
-      contact: contact.trim(),
-      passwordHash,
-      createdAt: Date.now(),
-    };
-    const session: Session = { name: account.name, contact: account.contact, signedInAt: Date.now() };
-    const next = write({ account, session });
-    set({ ...next, loaded: true });
-    return { ok: true };
-  },
-
-  login: async (contact, password) => {
-    const { account } = read();
-    if (!account) {
-      return { ok: false, error: 'No account on this device yet. Please sign up first.' };
-    }
-    if (account.contact.toLowerCase() !== contact.trim().toLowerCase()) {
-      return { ok: false, error: 'No account found for that email/phone.' };
-    }
-    const passwordHash = await hashPassword(password);
-    if (passwordHash !== account.passwordHash) {
-      return { ok: false, error: 'Incorrect password. Please try again.' };
-    }
-    const session: Session = { name: account.name, contact: account.contact, signedInAt: Date.now() };
-    const next = write({ account, session });
-    set({ ...next, loaded: true });
-    return { ok: true };
+    const demoUser = { name: fullName, email, role };
+    localStorage.setItem("aegis_user", JSON.stringify(demoUser));
+    set({ user: demoUser, loading: false });
   },
 
   logout: () => {
-    const next = write({ account: get().account, session: null });
-    set(next);
+    if (isBackendAvailable()) authApi.logout();
+    localStorage.removeItem("aegis_user");
+    localStorage.removeItem("aegis:access_token");
+    localStorage.removeItem("aegis:refresh_token");
+    set({ user: null, error: null });
   },
 }));
