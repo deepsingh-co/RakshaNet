@@ -478,26 +478,23 @@ export default function Layout() {
     return () => clearInterval(t);
   }, []);
 
-  const levelColor = {
-    LOW: "text-emerald-300 border-emerald-400/40 bg-emerald-500/10",
-    MEDIUM: "text-amber-300 border-amber-400/40 bg-amber-500/10",
-    HIGH: "text-orange-300 border-orange-400/40 bg-orange-500/10",
-    CRITICAL: "text-pink-300 border-pink-400/40 bg-pink-500/10",
+  const riskTone = {
+    LOW: "is-emerald",
+    MEDIUM: "is-amber",
+    HIGH: "is-rose",
+    CRITICAL: "is-rose",
   }[riskLevel];
 
   return (
-    <div className="relative min-h-screen">
+    <div className="rn-page rn-shell">
       {/* Global cross-user Bystander / SOS wake alert — fires on ANY page */}
       <GlobalBeaconWatcher />
-
-      <div className="aurora" />
-      <div className="grid-overlay" />
 
       <div className="relative z-10 flex">
         {/* Mobile overlay — renders BEFORE sidebar so sidebar's z-40 sits on top */}
         <div
           className={`lg:hidden fixed inset-0 z-30 transition-opacity duration-300 ${open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
-          style={{ background: "rgba(0,0,0,0.6)" }}
+          style={{ background: "rgba(16,43,39,0.45)" }}
           onClick={() => setOpen(false)}
           aria-hidden="true"
         />
@@ -506,60 +503,66 @@ export default function Layout() {
         <aside
           className={`${
             open ? "translate-x-0" : "-translate-x-full"
-          } lg:translate-x-0 fixed lg:sticky top-0 h-screen w-[260px] shrink-0 z-40 transition-transform duration-300 ${
+          } lg:translate-x-0 fixed lg:sticky top-0 h-screen w-[264px] shrink-0 z-40 transition-transform duration-300 ${
             !open ? "lg:pointer-events-auto pointer-events-none" : "pointer-events-auto"
           }`}
         >
-          <div className="theme-sidebar h-full p-5 glass-strong m-3 flex flex-col">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="relative w-11 h-11 rounded-2xl grid place-items-center glow-pink" style={{ background: "var(--aegis-gradient-primary)" }}>
-                <Shield className="w-6 h-6 text-white" />
-                <span className="absolute inset-0 rounded-2xl ring-2 pulse-ring" style={{ color: "var(--sidebar-accent)", borderColor: "var(--sidebar-border)" }} />
-              </div>
-              <div>
-                <div className="sidebar-title text-lg font-bold tracking-wide">RakshaNet</div>
-                <div className="sidebar-muted text-[10px] -mt-0.5 leading-tight">AI Women &amp; Child Safety Intelligence</div>
-              </div>
+          <div className="rn-sidebar">
+            <div className="rn-sidebar-brand">
+              <span className="rn-logo">
+                <ShieldCheck className="h-5 w-5" strokeWidth={2} aria-hidden="true" />
+                <span className="rn-logo-dot" aria-hidden="true" />
+              </span>
+              <span>
+                <span className="rn-brand-name block">RakshaNet</span>
+                <span className="rn-brand-sub block">Safety intelligence</span>
+              </span>
             </div>
 
             {/* Role indicator badge */}
-            <div className={`mb-6 px-3 py-2 rounded-xl border text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 ${user?.role === "ADMIN"
-                ? "bg-amber-500/10 border-amber-400/30 text-amber-300"
-                : user?.role === "GUARDIAN"
-                  ? "bg-cyan-500/10 border-cyan-400/30 text-cyan-300"
-                  : "bg-pink-500/10 border-pink-400/30 text-pink-300"
-              }`}>
+            <div
+              className={`rn-role-badge ${
+                user?.role === "ADMIN"
+                  ? "is-admin"
+                  : user?.role === "GUARDIAN"
+                    ? "is-guardian"
+                    : ""
+              }`}
+            >
               {user?.role === "ADMIN" ? (
-                <><Command className="w-3.5 h-3.5" /> Admin Panel</>
+                <>
+                  <Command className="h-3.5 w-3.5" aria-hidden="true" /> Admin panel
+                </>
               ) : user?.role === "GUARDIAN" ? (
-                <><Eye className="w-3.5 h-3.5" /> Guardian Panel</>
+                <>
+                  <Eye className="h-3.5 w-3.5" aria-hidden="true" /> Guardian panel
+                </>
               ) : (
-                <><Shield className="w-3.5 h-3.5" /> User Panel</>
+                <>
+                  <Shield className="h-3.5 w-3.5" aria-hidden="true" /> User panel
+                </>
               )}
             </div>
 
-            <nav className="flex flex-col gap-1">
+            <nav className="rn-nav" aria-label="Main navigation">
               {nav.map((n) => (
                 <NavLink
                   key={n.to}
                   to={n.to}
                   onClick={() => setOpen(false)}
                   className={({ isActive }) =>
-                    `group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm border transition ${isActive
-                      ? "sidebar-nav-active"
-                      : "sidebar-nav-item border-transparent"
-                    }`
+                    `rn-nav-item ${isActive ? "rn-nav-active" : ""}`
                   }
                 >
                   {({ isActive }) => (
                     <>
-                      <n.icon className="w-4 h-4" />
-                      <span className="font-medium">{n.label}</span>
+                      <n.icon className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      <span>{n.label}</span>
                       {isActive && (
                         <motion.span
                           layoutId="navdot"
-                          className="ml-auto w-1.5 h-1.5 rounded-full"
-                          style={{ background: "var(--sidebar-accent)", boxShadow: "0 0 12px 2px color-mix(in srgb, var(--sidebar-accent) 65%, transparent)" }}
+                          className="rn-nav-dot"
+                          aria-hidden="true"
                         />
                       )}
                     </>
@@ -568,25 +571,40 @@ export default function Layout() {
               ))}
             </nav>
 
-            <div className="mt-auto space-y-3">
-              <div className="glass p-3 rounded-xl">
-                <div className="flex items-center gap-2 text-[11px] mb-1" style={{ color: "var(--aegis-text-secondary)" }}>
-                  <Radio className="w-3 h-3 text-cyan-300 blink" /> LIVE SYSTEM
+            <div className="rn-sidebar-foot">
+              <div className="rn-live-card">
+                <div className="rn-live-row">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Radio
+                      className="h-3 w-3 text-[var(--rn-primary)]"
+                      aria-hidden="true"
+                    />
+                    Live system
+                  </span>
+                  <span className="rn-live-ok">Online</span>
                 </div>
-                <div className="text-xs">
-                  <div className="flex justify-between"><span style={{ color: "var(--aegis-text-secondary)" }}>WebSocket</span><span className="text-emerald-400">Connected</span></div>
-                  <div className="flex justify-between"><span style={{ color: "var(--aegis-text-secondary)" }}>AI Engine</span><span className="text-emerald-400">Online</span></div>
-                  <div className="flex justify-between"><span style={{ color: "var(--aegis-text-secondary)" }}>Twilio</span><span className="text-emerald-400">Armed</span></div>
+                <div className="rn-live-row">
+                  <span>WebSocket</span>
+                  <span className="rn-live-ok">Connected</span>
+                </div>
+                <div className="rn-live-row">
+                  <span>AI engine</span>
+                  <span className="rn-live-ok">Online</span>
+                </div>
+                <div className="rn-live-row">
+                  <span>Twilio</span>
+                  <span className="rn-live-ok">Armed</span>
                 </div>
               </div>
+
               <button
-                onClick={() => { logout(); navigate("/"); }}
-                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-sm border transition"
-                style={{ color: "var(--aegis-text-secondary)", borderColor: "var(--aegis-border)" }}
-                onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = "var(--aegis-text-primary)"; (e.currentTarget as HTMLButtonElement).style.background = "var(--aegis-surface-alt)"; }}
-                onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = "var(--aegis-text-secondary)"; (e.currentTarget as HTMLButtonElement).style.background = "transparent"; }}
+                onClick={() => {
+                  logout();
+                  navigate("/");
+                }}
+                className="rn-btn rn-btn-quiet rn-btn-sm w-full justify-start"
               >
-                <LogOut className="w-4 h-4" /> Sign out
+                <LogOut className="h-4 w-4" aria-hidden="true" /> Sign out
               </button>
             </div>
           </div>
@@ -595,100 +613,121 @@ export default function Layout() {
         {/* Main */}
         <div className="flex-1 min-w-0">
           {/* Topbar */}
-          <header className="sticky top-0 z-30 backdrop-blur-xl border-b" style={{ background: "color-mix(in srgb, var(--aegis-bg-alt) 85%, transparent)", borderColor: "var(--aegis-border)" }}>
-            <div className="flex items-center gap-3 px-4 lg:px-8 py-3">
-              <button className="lg:hidden p-2 glass-chip" onClick={() => setOpen(!open)}>
-                {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          <header className="rn-topbar">
+            <div className="flex items-center gap-3 px-4 py-3 lg:px-8">
+              <button
+                className="rn-icon-btn lg:hidden"
+                onClick={() => setOpen(!open)}
+                aria-label={open ? "Close navigation" : "Open navigation"}
+                aria-expanded={open}
+              >
+                {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
 
-              <div className="hidden md:flex items-center gap-2 glass-chip px-4 py-2 w-[320px]">
-                <Search className="w-4 h-4 text-slate-400" />
-                <input
-                  placeholder="Search areas, users, incidents…"
-                  className="bg-transparent outline-none text-sm flex-1 placeholder:text-slate-500"
-                />
-                <kbd className="text-[10px] text-slate-500 border border-white/10 px-1.5 py-0.5 rounded">⌘K</kbd>
+              <div className="hidden md:block">
+                <div className="rn-search w-[320px]">
+                  <Search className="h-4 w-4" aria-hidden="true" />
+                  <input
+                    placeholder="Search areas, users, incidents…"
+                    aria-label="Search areas, users and incidents"
+                  />
+                  <kbd>⌘K</kbd>
+                </div>
               </div>
 
               <div className="flex-1" />
 
-              <div className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border text-xs font-semibold ${levelColor}`}>
-                <Activity className="w-3.5 h-3.5" /> RISK • {riskLevel}
+              <div className="hidden sm:block">
+                <span className={`rn-pill ${riskTone}`}>
+                  <Activity className="h-3.5 w-3.5" aria-hidden="true" /> {riskLevel} risk
+                </span>
               </div>
 
-              <div className="hidden md:flex items-center gap-2 glass-chip px-3 py-1.5 text-xs tabular">
-                <Zap className="w-3.5 h-3.5 text-amber-300" />
-                {time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+              <div className="hidden md:block">
+                <span className="rn-pill">
+                  <Zap className="h-3.5 w-3.5 text-[var(--rn-amber)]" aria-hidden="true" />
+                  {time.toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    second: "2-digit",
+                  })}
+                </span>
               </div>
 
               {/* AI Voice Guard Header Indicator */}
               <button
                 onClick={() => setVoiceGuardOpen(!voiceGuardOpen)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-bold transition shadow-sm cursor-pointer ${
-                  voiceGuardOpen
-                    ? "bg-pink-500/25 border-pink-400 text-white"
-                    : "border-pink-400/40 bg-pink-500/10 text-pink-300 hover:bg-pink-500/20"
-                }`}
+                className={`rn-voice-btn ${voiceGuardOpen ? "is-open" : ""}`}
+                aria-expanded={voiceGuardOpen}
                 title="AI Voice Auto-Detection & Fix Trigger Words"
               >
-                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                <Mic className="w-3.5 h-3.5 text-pink-400" />
-                <span className="hidden sm:inline">Voice Guard</span>
-                <span className="text-[10px] bg-pink-500/20 px-1.5 py-0.2 rounded border border-pink-400/30">Auto</span>
+                <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+                <Mic className="h-3.5 w-3.5" aria-hidden="true" />
+                <span className="hidden sm:inline">Voice guard</span>
+                <span className="rounded border border-current px-1.5 text-[10px] opacity-80">
+                  Auto
+                </span>
               </button>
 
               <ThemeSwitcher variant="compact" />
 
-              <button className="relative p-2 glass-chip">
-                <Bell className="w-4 h-4" />
-                {sosActive && <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-pink-400 blink" />}
+              <button className="rn-icon-btn relative" aria-label="Notifications">
+                <Bell className="h-4 w-4" aria-hidden="true" />
+                {sosActive && (
+                  <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[var(--rn-accent)] blink" />
+                )}
               </button>
 
-              <div className="flex items-center gap-2 pl-2 border-l" style={{ borderColor: "var(--aegis-border)" }}>
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-pink-500 to-cyan-400 grid place-items-center text-xs font-bold text-white">
+              <div className="flex items-center gap-2 border-l border-[var(--rn-border)] pl-2">
+                <div
+                  className="grid h-9 w-9 place-items-center rounded-full text-xs font-bold text-white"
+                  style={{ background: "linear-gradient(135deg, #0b6b5d, #17967f)" }}
+                  aria-hidden="true"
+                >
                   {user?.name.split(" ").map((s) => s[0]).join("").slice(0, 2)}
                 </div>
-                <div className="hidden md:block leading-tight">
-                  <div className="text-sm font-semibold" style={{ color: "var(--aegis-text-primary)" }}>{user?.name}</div>
-                  <div className="text-[10px]" style={{ color: "var(--aegis-text-secondary)" }}>{user?.role}</div>
+                <div className="hidden leading-tight md:block">
+                  <div className="text-sm font-semibold text-[var(--rn-ink)]">{user?.name}</div>
+                  <div className="text-[10px] uppercase tracking-wide text-[var(--rn-ink-faint)]">
+                    {user?.role}
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Live ticker */}
-            <div className="border-t overflow-hidden" style={{ borderColor: "var(--aegis-border)", background: "color-mix(in srgb, var(--aegis-bg) 60%, transparent)" }}>
-              <div className="flex items-center gap-4 py-2 px-4 text-[11px]">
-                <span className="shrink-0 flex items-center gap-1.5 text-pink-300 font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-pink-400 blink" /> LIVE FEED
-                </span>
-                <div className="overflow-hidden flex-1">
-                  <div className="marquee-track" style={{ color: "var(--aegis-text-secondary)" }}>
-                    {[
-                      "🚨 SOS-4821 escalated to Delhi Police • Paharganj",
-                      "🛡 Safe route recomputed • 3 reports cleared on Ring Road",
-                      "⚡ AI Risk Engine • 14,283 live predictions/sec",
-                      "📡 Guardian portal • 2,417 active watchers",
-                      "🗺 Community intel • 48 new reports verified in last hour",
-                      "🚨 SOS-4821 escalated to Delhi Police • Paharganj",
-                      "🛡 Safe route recomputed • 3 reports cleared on Ring Road",
-                      "⚡ AI Risk Engine • 14,283 live predictions/sec",
-                    ].map((m, i) => (
-                      <span key={i}>{m}</span>
-                    ))}
-                  </div>
+            <div className="rn-ticker">
+              <span className="rn-ticker-label">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--rn-accent)] blink" />
+                Live feed
+              </span>
+              <div className="overflow-hidden flex-1">
+                <div className="rn-ticker-track">
+                  {[
+                    "🚨 SOS-4821 escalated to Delhi Police • Paharganj",
+                    "🛡 Safe route recomputed • 3 reports cleared on Ring Road",
+                    "⚡ AI Risk Engine • 14,283 live predictions/sec",
+                    "📡 Guardian portal • 2,417 active watchers",
+                    "🗺 Community intel • 48 new reports verified in last hour",
+                    "🚨 SOS-4821 escalated to Delhi Police • Paharganj",
+                    "🛡 Safe route recomputed • 3 reports cleared on Ring Road",
+                    "⚡ AI Risk Engine • 14,283 live predictions/sec",
+                  ].map((m, i) => (
+                    <span key={i}>{m}</span>
+                  ))}
                 </div>
               </div>
             </div>
           </header>
 
-          <main className="px-4 lg:px-8 py-6 lg:py-8">
+          <main className="rn-main">
             <Outlet />
           </main>
         </div>
       </div>
 
       {/* Notifications */}
-      <div className="fixed bottom-6 right-6 z-50 space-y-2 w-[340px]">
+      <div className="fixed bottom-5 right-5 z-50 w-[340px] max-w-[calc(100vw-2.5rem)] space-y-2">
         <AnimatePresence>
           {notifications.map((n) => (
             <motion.div
@@ -696,16 +735,19 @@ export default function Layout() {
               initial={{ opacity: 0, x: 40, scale: 0.95 }}
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: 40, scale: 0.95 }}
-              className={`glass-strong p-3 rounded-xl flex items-start gap-3 ${n.kind === "critical" ? "glow-pink" : n.kind === "warn" ? "glow-amber" : "glow-cyan"
-                }`}
+              className={`rn-toast ${
+                n.kind === "critical" ? "is-critical" : n.kind === "warn" ? "is-warn" : ""
+              }`}
+              role={n.kind === "critical" ? "alert" : "status"}
             >
-              <div className={`w-8 h-8 rounded-lg grid place-items-center shrink-0 ${n.kind === "critical" ? "bg-pink-500/20 text-pink-300"
-                  : n.kind === "warn" ? "bg-amber-500/20 text-amber-300"
-                    : "bg-cyan-500/20 text-cyan-300"
-                }`}>
-                {n.kind === "critical" ? <Siren className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
-              </div>
-              <div className="text-xs leading-snug">{n.msg}</div>
+              <span className="rn-toast-icon">
+                {n.kind === "critical" ? (
+                  <Siren className="h-4 w-4" aria-hidden="true" />
+                ) : (
+                  <Bell className="h-4 w-4" aria-hidden="true" />
+                )}
+              </span>
+              <span className="pt-1.5">{n.msg}</span>
             </motion.div>
           ))}
         </AnimatePresence>

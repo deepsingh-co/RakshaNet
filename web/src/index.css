@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./theme/tailwind-theme-bridge.css";
+@import "./styles/app-surfaces.css";
 
 :root {
   color-scheme: light;
@@ -190,19 +191,8 @@ body,
    of this file) so it deliberately opts out of the global light-palette
    black-copy override. All of its text colours are contrast-checked. */
 
-/* Login page (light palettes): all copy + fields in black */
-:is([data-aegis-theme="atlasBisque"], [data-aegis-theme="oliveCream"], [data-aegis-theme="tealBeige"], [data-aegis-theme="pureWhite"]) .login-page :is(div, span, p, h1, h2, h3, h4, h5, h6, a, button, strong, em, small, li, label, code):not(svg) {
-  color: #000000 !important;
-}
-
-:is([data-aegis-theme="atlasBisque"], [data-aegis-theme="oliveCream"], [data-aegis-theme="tealBeige"], [data-aegis-theme="pureWhite"]) .login-page :is(input, textarea, select) {
-  color: #000000 !important;
-}
-
-:is([data-aegis-theme="atlasBisque"], [data-aegis-theme="oliveCream"], [data-aegis-theme="tealBeige"], [data-aegis-theme="pureWhite"]) .login-page :is(input, textarea)::placeholder {
-  color: #000000 !important;
-  opacity: 0.55;
-}
+/* Auth + app surfaces own their palette through the `.rn-*` layer at the
+   end of this file, so they opt out of the global light-palette override. */
 
 .sidebar-nav-item,
 .sidebar-nav-active,

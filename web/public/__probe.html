@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+  <body style="margin:0;font:12px monospace;background:#111;color:#eee">
+    <pre id="out">loading…</pre>
+    <script>
+      localStorage.setItem(
+        "aegis_user",
+        JSON.stringify({ id: "USR-PROBE", name: "Aanya Kapoor", email: "aanya@aegis.ai", role: "USER" })
+      );
+      const out = document.getElementById("out");
+      const targets = [
+        { path: "/login", w: 390 },
+        { path: "/register", w: 390 },
+        { path: "/app/dashboard", w: 390 },
+        { path: "/app/dashboard", w: 1440 },
+      ];
+      const results = [];
+      let pending = targets.length;
+      targets.forEach((t, i) => {
+        const f = document.createElement("iframe");
+        f.src = t.path;
+        f.style.cssText = "width:" + t.w + "px;height:1000px;border:0";
+        f.addEventListener("load", () => {
+          try {
+            const d = f.contentDocument;
+            const w = f.contentWindow.innerWidth;
+            const sw = d.documentElement.scrollWidth;
+            const offenders = [...d.querySelectorAll("*")]
+              .map((el) => {
+                const r = el.getBoundingClientRect();
+                return {
+                  tag: el.tagName,
+                  cls: (el.className && el.className.toString ? el.className.toString() : "").slice(0, 48),
+                  left: Math.round(r.left),
+                  right: Math.round(r.right),
+                  width: Math.round(r.width),
+                };
+              })
+              .filter((o) => o.right > w + 1 || o.left < -1)
+              .slice(0, 8);
+            results[i] = { path: t.path, frame: t.w, w, sw, offenders };
+          } catch (e) {
+            results[i] = { path: t.path, frame: t.w, error: String(e) };
+          }
+          if (--pending === 0) out.textContent = JSON.stringify(results, null, 2);
+        });
+        document.body.appendChild(f);
+      });
+    </script>
+  </body>
+</html>

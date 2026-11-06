@@ -1,19 +1,36 @@
 import { useEffect } from "react";
+import type { CSSProperties } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  Activity, MapPin, Heart, Battery, Route, ShieldAlert, Users, Flame,
-  ArrowUpRight, ArrowDownRight, Minus, Sparkles,
+  Activity,
+  ArrowDownRight,
+  ArrowRight,
+  ArrowUpRight,
+  Battery,
+  Flame,
+  Heart,
+  MapPin,
+  Minus,
+  Route,
+  ShieldAlert,
+  Siren,
+  Sparkles,
+  Users,
 } from "lucide-react";
 import { useSafetyStore } from "../store/safetyStore";
+import { useAuthStore } from "../store/authStore";
 import ThreatGauge from "../components/ThreatGauge";
 import MapView from "../components/MapView";
-import { StatCard, SectionHeader, Pill } from "../components/ui";
 import {
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid,
-  RadialBarChart, RadialBar, PolarAngleAxis,
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from "recharts";
-
-import { useAuthStore } from "../store/authStore";
 
 const riskSeries = Array.from({ length: 32 }, (_, i) => ({
   t: `${i * 2}m`,
@@ -21,11 +38,61 @@ const riskSeries = Array.from({ length: 32 }, (_, i) => ({
   safe: Math.round(65 - Math.sin(i / 3) * 12 + Math.random() * 6),
 }));
 
+const metricColor = (color: string) => ({ "--rn-metric-color": color } as CSSProperties);
+
+const insights = [
+  {
+    tone: "rose",
+    title: "Reroute recommended",
+    body: "Your current route passes a flagged zone. Switch to Ring Road for +31% safety.",
+  },
+  {
+    tone: "amber",
+    title: "Battery-aware mode",
+    body: "At 73% battery, RakshaNet will auto-send your last location if it drops below 10%.",
+  },
+  {
+    tone: "primary",
+    title: "Companion nearby",
+    body: "Your guardian Rahul is 1.8 km away and actively tracking.",
+  },
+  {
+    tone: "violet",
+    title: "Safe shelter ahead",
+    body: "A verified, 24/7 staffed shelter is 240 m to your right.",
+  },
+];
+
+const health = [
+  ["Spring Boot", "OK"],
+  ["PostgreSQL", "OK"],
+  ["FastAPI AI", "OK"],
+  ["Twilio", "ARMED"],
+  ["WebSocket", "14.2k msgs/s"],
+  ["Google Maps", "OK"],
+];
+
+function greeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
 export default function Dashboard() {
   const { user } = useAuthStore();
   const {
-    riskScore, riskLevel, confidence, currentLocation, battery, heartbeat, speed,
-    threatFactors, activeAlerts, tick, startTrackingLocation
+    riskScore,
+    riskLevel,
+    confidence,
+    currentLocation,
+    battery,
+    heartbeat,
+    speed,
+    threatFactors,
+    activeAlerts,
+    tick,
+    startTrackingLocation,
   } = useSafetyStore();
 
   useEffect(() => {
@@ -36,239 +103,487 @@ export default function Dashboard() {
     return () => clearInterval(id);
   }, [tick, startTrackingLocation]);
 
-  const radial = threatFactors.map((f, i) => ({
-    name: f.label,
-    value: f.value,
-    fill: ["#ff3d7f", "#38e8ff", "#ffb020", "#ff8a3d", "#2ee6a6", "#a78bfa"][i % 6],
-  }));
+  const firstName = user?.name?.split(" ")[0] || "there";
+  const trendTone =
+    riskLevel === "CRITICAL" || riskLevel === "HIGH"
+      ? "is-rose"
+      : riskLevel === "MEDIUM"
+        ? "is-amber"
+        : "is-emerald";
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <div className="text-[11px] uppercase tracking-[0.3em] text-pink-300">Command Deck</div>
-          <h1 className="text-3xl lg:text-4xl font-black mt-1">Welcome back, {user?.name?.split(" ")[0] || "User"}</h1>
-          <p className="text-slate-400 mt-1 text-sm">Your AI safety copilot is actively monitoring 48 signals.</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Pill tone="emerald"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 blink" /> AI Active</Pill>
-          <Pill tone="cyan"><span className="w-1.5 h-1.5 rounded-full bg-cyan-400 blink" /> WebSocket</Pill>
-        </div>
-      </div>
+    <div className="rn-page">
+      <div className="space-y-5">
+        {/* ── Header ─────────────────────────────────────────────── */}
+        <div className="rn-dash-head">
+          <div>
+            <span className="rn-eyebrow">Command deck</span>
+            <h1 className="rn-display rn-dash-title">
+              {greeting()}, <em>{firstName}</em>
+            </h1>
+            <p className="rn-dash-sub">
+              Your safety copilot is watching 48 live signals. Everything below is
+              aggregated from this device first — the network is a bonus, not a
+              dependency.
+            </p>
+          </div>
 
-      {/* Top row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard label="Threat Score" value={riskScore} hint={`Confidence ${Math.round(confidence)}%`} tone="pink"
-          icon={<ShieldAlert className="w-6 h-6" />} />
-        <StatCard label="Heart Rate" value={`${Math.round(heartbeat)} bpm`} hint="Wrist sensor" tone="cyan"
-          icon={<Heart className="w-6 h-6" />} />
-        <StatCard label="Speed" value={`${speed.toFixed(1)} m/s`} hint={speed > 5 ? "⚠ Running" : "Walking"} tone={speed > 5 ? "amber" : "emerald"}
-          icon={<Activity className="w-6 h-6" />} />
-        <StatCard label="Battery" value={`${battery}%`} hint={battery < 20 ? "Low power mode" : "Normal"} tone={battery < 20 ? "amber" : "violet"}
-          icon={<Battery className="w-6 h-6" />} />
-      </div>
+          <div className="rn-dash-actions">
+            <span className={`rn-pill ${trendTone}`}>
+              <span className="rn-dot" aria-hidden="true" />
+              {riskLevel} risk
+            </span>
+            <span className="rn-pill is-emerald">
+              <span className="rn-dot" aria-hidden="true" />
+              AI active
+            </span>
+            <Link to="/app/journey" className="rn-btn rn-btn-ghost rn-btn-sm">
+              <Route className="h-4 w-4" aria-hidden="true" />
+              Start a journey
+            </Link>
+            <Link to="/app/sos" className="rn-btn rn-btn-accent rn-btn-sm">
+              <Siren className="h-4 w-4" aria-hidden="true" />
+              Open SOS
+            </Link>
+          </div>
+        </div>
 
-      {/* Hero row */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Threat gauge */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          className="glass-strong p-6 rounded-3xl"
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-xs uppercase tracking-widest text-slate-400">Real-time Risk</div>
-              <div className="text-lg font-bold">{riskLevel} RISK</div>
+        {/* ── Metrics ────────────────────────────────────────────── */}
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <div className="rn-metric" style={metricColor("#c23e56")}>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <div className="rn-metric-label">Threat score</div>
+                <div className="rn-metric-value">
+                  {riskScore}
+                  <span className="ml-1 text-sm font-medium text-[var(--rn-ink-faint)]">/100</span>
+                </div>
+                <div className="rn-metric-hint">Confidence {Math.round(confidence)}%</div>
+              </div>
+              <span className="rn-metric-icon">
+                <ShieldAlert className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
+              </span>
             </div>
-            <Pill tone={riskLevel === "CRITICAL" ? "pink" : riskLevel === "HIGH" ? "amber" : riskLevel === "MEDIUM" ? "amber" : "emerald"}>
-              {riskLevel}
-            </Pill>
           </div>
-          <div className="mt-4 grid place-items-center">
-            <ThreatGauge score={riskScore} confidence={confidence} size={220} />
-          </div>
-          <div className="mt-4 text-[11px] text-slate-400 text-center">
-            Aggregated from crime density, lighting, crowd, time & community intel
-          </div>
-        </motion.div>
 
-        {/* Live map */}
-        <div className="lg:col-span-2 glass-strong p-4 rounded-3xl">
-          <div className="flex items-center justify-between mb-3 px-2">
-            <div>
-              <div className="text-xs uppercase tracking-widest text-slate-400">Live Position</div>
-              <div className="text-sm font-semibold flex items-center gap-2">
-                <MapPin className="w-4 h-4 text-pink-300" /> {currentLocation.area}
+          <div className="rn-metric" style={metricColor("#0b6b5d")}>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <div className="rn-metric-label">Heart rate</div>
+                <div className="rn-metric-value">
+                  {Math.round(heartbeat)}
+                  <span className="ml-1 text-sm font-medium text-[var(--rn-ink-faint)]">bpm</span>
+                </div>
+                <div className="rn-metric-hint">Wrist sensor</div>
               </div>
+              <span className="rn-metric-icon">
+                <Heart className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
+              </span>
             </div>
-            <Pill tone="cyan">GPS LOCK</Pill>
           </div>
-          <MapView
-            center={[currentLocation.lat, currentLocation.lng]}
-            zoom={14}
-            height={340}
-            markers={[
-              { position: [currentLocation.lat, currentLocation.lng], label: "You", kind: "user" },
-              { position: [currentLocation.lat + 0.008, currentLocation.lng + 0.005], label: "Police Chowki", kind: "police", meta: "ETA 6 min" },
-              { position: [currentLocation.lat - 0.006, currentLocation.lng + 0.009], label: "Apollo Hospital", kind: "hospital", meta: "1.2 km" },
-              { position: [currentLocation.lat + 0.004, currentLocation.lng - 0.007], label: "Safe Shelter", kind: "shelter", meta: "Verified" },
-            ]}
-            dangerZones={[
-              { center: [currentLocation.lat + 0.009, currentLocation.lng - 0.01], radius: 320, color: "#ff3d7f", label: "High incident zone" },
-              { center: [currentLocation.lat - 0.008, currentLocation.lng - 0.012], radius: 220, color: "#ffb020", label: "Poor lighting" },
-            ]}
-          />
-        </div>
-      </div>
 
-      {/* Mid row */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        {/* Risk timeline */}
-        <div className="lg:col-span-2 glass-strong p-6 rounded-3xl">
-          <SectionHeader
-            title="Risk Timeline"
-            subtitle="AI predictions over the last hour"
-            action={<Pill tone="cyan">Live</Pill>}
-          />
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={riskSeries}>
-                <defs>
-                  <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#ff3d7f" stopOpacity={0.6} />
-                    <stop offset="100%" stopColor="#ff3d7f" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="g2" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#38e8ff" stopOpacity={0.5} />
-                    <stop offset="100%" stopColor="#38e8ff" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                <XAxis dataKey="t" stroke="#5b607a" fontSize={11} />
-                <YAxis stroke="#5b607a" fontSize={11} />
-                <Tooltip
-                  contentStyle={{ background: "rgba(10,13,31,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, fontSize: 12 }}
-                  labelStyle={{ color: "#e6e9f5" }}
-                />
-                <Area type="monotone" dataKey="risk" stroke="#ff3d7f" strokeWidth={2.5} fill="url(#g1)" />
-                <Area type="monotone" dataKey="safe" stroke="#38e8ff" strokeWidth={2} fill="url(#g2)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* Threat factors radial */}
-        <div className="glass-strong p-6 rounded-3xl">
-          <SectionHeader title="Threat Signals" subtitle="6 active predictors" />
-          <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <RadialBarChart innerRadius="20%" outerRadius="100%" data={radial} startAngle={180} endAngle={-180}>
-                <PolarAngleAxis type="number" domain={[0, 100]} tick={false} />
-                <RadialBar background={{ fill: "rgba(255,255,255,0.04)" }} dataKey="value" cornerRadius={8} />
-              </RadialBarChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="space-y-2">
-            {threatFactors.map((f) => (
-              <div key={f.label} className="flex items-center justify-between text-xs">
-                <span className="text-slate-300">{f.label}</span>
-                <span className="flex items-center gap-2 tabular">
-                  <span className="font-semibold">{f.value}</span>
-                  {f.trend === "up" ? <ArrowUpRight className="w-3.5 h-3.5 text-pink-300" />
-                    : f.trend === "down" ? <ArrowDownRight className="w-3.5 h-3.5 text-emerald-300" />
-                    : <Minus className="w-3.5 h-3.5 text-slate-500" />}
-                </span>
+          <div className="rn-metric" style={metricColor("#c58a25")}>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <div className="rn-metric-label">Speed</div>
+                <div className="rn-metric-value">
+                  {speed.toFixed(1)}
+                  <span className="ml-1 text-sm font-medium text-[var(--rn-ink-faint)]">m/s</span>
+                </div>
+                <div className="rn-metric-hint">{speed > 5 ? "Running detected" : "Walking pace"}</div>
               </div>
-            ))}
+              <span className="rn-metric-icon">
+                <Activity className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
+              </span>
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Bottom row */}
-      <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 glass-strong p-6 rounded-3xl">
-          <SectionHeader
-            title="Active Alerts Network"
-            subtitle={`${activeAlerts.length} live alerts across the city`}
-            action={<Pill tone="pink">Citywide</Pill>}
-          />
-          <div className="space-y-3">
-            {activeAlerts.slice(0, 4).map((a) => (
-              <motion.div
-                key={a.id}
-                whileHover={{ scale: 1.005 }}
-                className="flex items-center gap-4 glass p-4 rounded-2xl border border-white/5"
-              >
-                <div className={`w-12 h-12 rounded-2xl grid place-items-center font-bold ${
-                  a.level === "CRITICAL" ? "bg-pink-500/20 text-pink-200" : a.level === "HIGH" ? "bg-orange-500/20 text-orange-200" : "bg-amber-500/20 text-amber-200"
-                }`}>{a.avatar}</div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold">{a.user}</span>
-                    <Pill tone={a.level === "CRITICAL" ? "pink" : a.level === "HIGH" ? "amber" : "cyan"}>{a.level}</Pill>
-                    {a.status === "ESCALATED" && <Pill tone="pink">ESCALATED</Pill>}
-                  </div>
-                  <div className="text-xs text-slate-400 truncate flex items-center gap-2 mt-0.5">
-                    <MapPin className="w-3 h-3" /> {a.area} • {a.trigger}
-                  </div>
+          <div className="rn-metric" style={metricColor("#6d5a8a")}>
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <div className="rn-metric-label">Battery</div>
+                <div className="rn-metric-value">
+                  {battery}
+                  <span className="ml-1 text-sm font-medium text-[var(--rn-ink-faint)]">%</span>
                 </div>
-                <div className="text-right text-xs tabular">
-                  <div className="text-white font-semibold">{a.confidence}%</div>
-                  <div className="text-slate-400">confidence</div>
-                  <div className="mt-1 flex items-center gap-2 text-slate-400">
-                    <Heart className="w-3 h-3 text-pink-300" /> {a.heartbeat}
-                    <Battery className="w-3 h-3" /> {a.battery}%
-                  </div>
-                </div>
-                <div className="text-xs text-slate-500">{a.time}</div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-
-        <div className="glass-strong p-6 rounded-3xl">
-          <SectionHeader
-            title="AI Safety Copilot"
-            subtitle="Personalized insights"
-            action={<Sparkles className="w-4 h-4 text-cyan-300" />}
-          />
-          <div className="space-y-3">
-            {[
-              { tone: "pink", title: "Reroute recommended", d: "Your current route passes a flagged zone. Switch to Ring Road for +31% safety." },
-              { tone: "amber", title: "Battery-aware mode", d: "At 73% battery, RakshaNet will auto-send last location if below 10%." },
-              { tone: "cyan", title: "Companion nearby", d: "Your guardian Rahul is 1.8 km away and actively tracking." },
-              { tone: "emerald", title: "Safe shelter ahead", d: "Verified shelter 240m to your right — 24/7 staffed." },
-            ].map((m, i) => (
-              <div key={i} className="glass p-3 rounded-xl">
-                <div className="flex items-center gap-2">
-                  <div className={`w-2 h-2 rounded-full ${
-                    m.tone === "pink" ? "bg-pink-400" : m.tone === "amber" ? "bg-amber-400" : m.tone === "cyan" ? "bg-cyan-400" : "bg-emerald-400"
-                  }`} />
-                  <div className="text-sm font-semibold">{m.title}</div>
-                </div>
-                <p className="text-xs text-slate-400 mt-1 leading-snug">{m.d}</p>
+                <div className="rn-metric-hint">{battery < 20 ? "Low power mode" : "Normal"}</div>
               </div>
-            ))}
+              <span className="rn-metric-icon">
+                <Battery className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
+              </span>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Marquee trust */}
-      <div className="glass p-4 rounded-2xl flex items-center gap-4 text-xs text-slate-400">
-        <Route className="w-4 h-4 text-cyan-300" />
-        <span className="text-white font-semibold">System Health</span>
-        <div className="flex-1" />
-        {[
-          ["Spring Boot", "OK"], ["PostgreSQL", "OK"], ["FastAPI AI", "OK"],
-          ["Twilio", "ARMED"], ["WebSocket", "14.2k msgs/s"], ["Google Maps", "OK"],
-        ].map(([k, v]) => (
-          <div key={k} className="flex items-center gap-1.5">
-            <span className="text-slate-500">{k}</span>
-            <span className="text-emerald-300 font-semibold">{v}</span>
+        {/* ── Hero: gauge + map ──────────────────────────────────── */}
+        <div className="rn-hero-grid">
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            className="rn-card"
+          >
+            <div className="rn-card-head">
+              <div>
+                <div className="rn-kicker">Real-time risk</div>
+                <div className="rn-card-title">{riskLevel} risk</div>
+                <div className="rn-card-sub">Aggregated from six live predictors</div>
+              </div>
+              <span className={`rn-pill ${trendTone}`}>{riskLevel}</span>
+            </div>
+
+            <div className="rn-risk-shell mt-3">
+              <ThreatGauge score={riskScore} confidence={confidence} size={212} light />
+            </div>
+
+            <p className="rn-risk-note">
+              Crime density, lighting, crowd, time, route deviation and community
+              intel — recomputed every 1.5 seconds.
+            </p>
+          </motion.div>
+
+          <div className="rn-card">
+            <div className="rn-card-head mb-3">
+              <div>
+                <div className="rn-kicker">Live position</div>
+                <div className="rn-card-title flex items-center gap-2">
+                  <MapPin className="h-4 w-4 text-[var(--rn-primary)]" aria-hidden="true" />
+                  {currentLocation.area}
+                </div>
+                <div className="rn-card-sub">Last fix just now · accuracy 8 m</div>
+              </div>
+              <span className="rn-pill is-emerald">
+                <span className="rn-dot" aria-hidden="true" />
+                GPS lock
+              </span>
+            </div>
+
+            <MapView
+              center={[currentLocation.lat, currentLocation.lng]}
+              zoom={14}
+              height={340}
+              light
+              markers={[
+                {
+                  position: [currentLocation.lat, currentLocation.lng],
+                  label: "You",
+                  kind: "user",
+                },
+                {
+                  position: [currentLocation.lat + 0.008, currentLocation.lng + 0.005],
+                  label: "Police Chowki",
+                  kind: "police",
+                  meta: "ETA 6 min",
+                },
+                {
+                  position: [currentLocation.lat - 0.006, currentLocation.lng + 0.009],
+                  label: "Apollo Hospital",
+                  kind: "hospital",
+                  meta: "1.2 km",
+                },
+                {
+                  position: [currentLocation.lat + 0.004, currentLocation.lng - 0.007],
+                  label: "Safe Shelter",
+                  kind: "shelter",
+                  meta: "Verified",
+                },
+              ]}
+              dangerZones={[
+                {
+                  center: [currentLocation.lat + 0.009, currentLocation.lng - 0.01],
+                  radius: 320,
+                  color: "#c23e56",
+                  label: "High incident zone",
+                },
+                {
+                  center: [currentLocation.lat - 0.008, currentLocation.lng - 0.012],
+                  radius: 220,
+                  color: "#c58a25",
+                  label: "Poor lighting",
+                },
+              ]}
+            />
           </div>
-        ))}
-        <Flame className="w-4 h-4 text-amber-300" />
-        <Users className="w-4 h-4 text-violet-300" />
+        </div>
+
+        {/* ── Mid: timeline + factors ────────────────────────────── */}
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="rn-card lg:col-span-2">
+            <div className="rn-card-head">
+              <div>
+                <div className="rn-kicker">Last hour</div>
+                <div className="rn-card-title">Risk timeline</div>
+                <div className="rn-card-sub">AI predictions alongside observed safety</div>
+              </div>
+              <span className="rn-pill is-emerald">
+                <span className="rn-dot" aria-hidden="true" />
+                Live
+              </span>
+            </div>
+
+            <div className="rn-chart-frame">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={riskSeries} margin={{ top: 10, right: 6, left: -18, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="rn-risk" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#c23e56" stopOpacity={0.28} />
+                      <stop offset="100%" stopColor="#c23e56" stopOpacity={0} />
+                    </linearGradient>
+                    <linearGradient id="rn-safe" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#0b6b5d" stopOpacity={0.22} />
+                      <stop offset="100%" stopColor="#0b6b5d" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 6" stroke="#e5ded1" vertical={false} />
+                  <XAxis
+                    dataKey="t"
+                    stroke="#5c6864"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                    interval={7}
+                  />
+                  <YAxis
+                    stroke="#5c6864"
+                    fontSize={11}
+                    tickLine={false}
+                    axisLine={false}
+                    domain={[0, 100]}
+                  />
+                  <Tooltip
+                    cursor={{ stroke: "#d5cbba", strokeDasharray: "4 4" }}
+                    contentStyle={{
+                      background: "#fffdf8",
+                      border: "1px solid #e5ded1",
+                      borderRadius: 12,
+                      fontSize: 12,
+                      color: "#14221f",
+                      boxShadow: "0 14px 34px -24px rgba(16,43,39,0.35)",
+                    }}
+                    labelStyle={{ color: "#5c6864", fontSize: 11 }}
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="risk"
+                    name="Risk"
+                    stroke="#c23e56"
+                    strokeWidth={2.2}
+                    fill="url(#rn-risk)"
+                  />
+                  <Area
+                    type="monotone"
+                    dataKey="safe"
+                    name="Safety"
+                    stroke="#0b6b5d"
+                    strokeWidth={2}
+                    fill="url(#rn-safe)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="rn-card">
+            <div className="rn-card-head">
+              <div>
+                <div className="rn-kicker">Six predictors</div>
+                <div className="rn-card-title">Threat signals</div>
+                <div className="rn-card-sub">Higher means more risk right now</div>
+              </div>
+              <span className="rn-pill is-amber">{threatFactors.length} active</span>
+            </div>
+
+            <div className="mt-3">
+              {threatFactors.map((factor) => (
+                <div key={factor.label} className="rn-factor">
+                  <div className="rn-factor-top">
+                    <span className="rn-factor-label">{factor.label}</span>
+                    <span className="rn-factor-value">
+                      {factor.value}
+                      {factor.trend === "up" ? (
+                        <ArrowUpRight
+                          className="h-3.5 w-3.5 text-[var(--rn-accent)]"
+                          aria-label="trending up"
+                        />
+                      ) : factor.trend === "down" ? (
+                        <ArrowDownRight
+                          className="h-3.5 w-3.5 text-[var(--rn-primary)]"
+                          aria-label="trending down"
+                        />
+                      ) : (
+                        <Minus
+                          className="h-3.5 w-3.5 text-[var(--rn-ink-faint)]"
+                          aria-label="steady"
+                        />
+                      )}
+                    </span>
+                  </div>
+                  <div
+                    className="rn-factor-track"
+                    role="progressbar"
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-valuenow={factor.value}
+                    aria-label={factor.label}
+                  >
+                    <div className="rn-factor-fill" style={{ width: `${factor.value}%` }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Bottom: alerts + insights ──────────────────────────── */}
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="rn-card lg:col-span-2">
+            <div className="rn-card-head">
+              <div>
+                <div className="rn-kicker">Citywide network</div>
+                <div className="rn-card-title">Active alerts</div>
+                <div className="rn-card-sub">
+                  {activeAlerts.length} live alerts · newest first
+                </div>
+              </div>
+              <span className="rn-pill is-rose">
+                <span className="rn-dot" aria-hidden="true" />
+                Escalating
+              </span>
+            </div>
+
+            <div className="mt-3">
+              {activeAlerts.slice(0, 4).map((alert) => (
+                <div key={alert.id} className="rn-alert-row">
+                  <span
+                    className={`rn-alert-avatar ${
+                      alert.level === "CRITICAL"
+                        ? "is-critical"
+                        : alert.level === "HIGH"
+                          ? "is-amber"
+                          : ""
+                    }`}
+                    aria-hidden="true"
+                  >
+                    {alert.avatar}
+                  </span>
+
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="rn-alert-name">{alert.user}</span>
+                      <span
+                        className={`rn-pill ${
+                          alert.level === "CRITICAL"
+                            ? "is-rose"
+                            : alert.level === "HIGH"
+                              ? "is-amber"
+                              : "is-emerald"
+                        }`}
+                      >
+                        {alert.level}
+                      </span>
+                      {alert.status === "ESCALATED" && (
+                        <span className="rn-pill is-rose">Escalated</span>
+                      )}
+                    </div>
+                    <div className="rn-alert-meta">
+                      <MapPin className="h-3 w-3 shrink-0" aria-hidden="true" />
+                      <span className="truncate">
+                        {alert.area} · {alert.trigger}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="rn-alert-stats">
+                    <div className="rn-alert-confidence">{alert.confidence}%</div>
+                    <div>confidence</div>
+                    <div className="mt-1 flex items-center justify-end gap-2">
+                      <span className="inline-flex items-center gap-0.5">
+                        <Heart className="h-3 w-3 text-[var(--rn-accent)]" aria-hidden="true" />
+                        {alert.heartbeat}
+                      </span>
+                      <span className="inline-flex items-center gap-0.5">
+                        <Battery className="h-3 w-3" aria-hidden="true" />
+                        {alert.battery}%
+                      </span>
+                    </div>
+                  </div>
+
+                  <span className="hidden shrink-0 self-start text-[11px] text-[var(--rn-ink-faint)] sm:block">
+                    {alert.time}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <Link
+              to="/app/community"
+              className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--rn-primary-strong)] hover:underline"
+            >
+              Open community intel
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
+          </div>
+
+          <div className="rn-card">
+            <div className="rn-card-head">
+              <div>
+                <div className="rn-kicker">Personalized</div>
+                <div className="rn-card-title">AI safety copilot</div>
+                <div className="rn-card-sub">What matters in the next 10 minutes</div>
+              </div>
+              <span className="rn-metric-icon" style={metricColor("#0b6b5d")}>
+                <Sparkles className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
+              </span>
+            </div>
+
+            <div className="mt-3">
+              {insights.map((insight) => (
+                <div key={insight.title} className="rn-insight">
+                  <span
+                    className={`rn-insight-dot ${
+                      insight.tone === "primary" ? "" : `is-${insight.tone}`
+                    }`.trim()}
+                    aria-hidden="true"
+                  />
+                  <div>
+                    <div className="rn-insight-title">{insight.title}</div>
+                    <p className="rn-insight-body">{insight.body}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <Link
+              to="/app/ai"
+              className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--rn-primary-strong)] hover:underline"
+            >
+              Ask the copilot
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+            </Link>
+          </div>
+        </div>
+
+        {/* ── System health ──────────────────────────────────────── */}
+        <div className="rn-health">
+          <span className="rn-health-item">
+            <Route className="h-3.5 w-3.5 text-[var(--rn-primary)]" aria-hidden="true" />
+            <strong>System health</strong>
+          </span>
+          {health.map(([name, value]) => (
+            <span key={name} className="rn-health-item">
+              {name}
+              <strong>{value}</strong>
+            </span>
+          ))}
+          <span className="rn-health-item ml-auto">
+            <Flame className="h-3.5 w-3.5 text-[var(--rn-accent)]" aria-hidden="true" />
+            <strong>All clear</strong>
+          </span>
+          <span className="rn-health-item">
+            <Users className="h-3.5 w-3.5 text-[var(--rn-violet)]" aria-hidden="true" />
+            <strong>2,417</strong> guardians
+          </span>
+        </div>
       </div>
     </div>
   );

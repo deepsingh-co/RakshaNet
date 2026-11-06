@@ -5,24 +5,27 @@ export default function ThreatGauge({
   score,
   confidence,
   size = 220,
+  light = false,
 }: {
   score: number;
   level?: RiskLevel;
   confidence: number;
   size?: number;
+  light?: boolean;
 }) {
   const radius = size / 2 - 18;
   const circumference = 2 * Math.PI * radius;
   const progress = (score / 100) * circumference;
 
   const gradient = useMemo(() => {
-    if (score >= 80) return { a: "#ff3d7f", b: "#ff8a3d" };
-    if (score >= 60) return { a: "#ff8a3d", b: "#ffb020" };
-    if (score >= 35) return { a: "#ffb020", b: "#38e8ff" };
-    return { a: "#2ee6a6", b: "#38e8ff" };
+    if (score >= 80) return { a: "#c23e56", b: "#e0714f" };
+    if (score >= 60) return { a: "#c9752a", b: "#c58a25" };
+    if (score >= 35) return { a: "#c58a25", b: "#0b6b5d" };
+    return { a: "#0b6b5d", b: "#17967f" };
   }, [score]);
 
   const gradId = `tg-${score}`;
+  const track = light ? "rgba(20,34,31,0.08)" : "rgba(255,255,255,0.08)";
 
   return (
     <div className="relative" style={{ width: size, height: size }}>
@@ -33,7 +36,14 @@ export default function ThreatGauge({
             <stop offset="100%" stopColor={gradient.b} />
           </linearGradient>
         </defs>
-        <circle cx={size / 2} cy={size / 2} r={radius} stroke="rgba(255,255,255,0.08)" strokeWidth={12} fill="none" />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={radius}
+          stroke={track}
+          strokeWidth={12}
+          fill="none"
+        />
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -49,11 +59,35 @@ export default function ThreatGauge({
       </svg>
       <div className="absolute inset-0 grid place-items-center">
         <div className="text-center">
-          <div className="text-[11px] uppercase tracking-[0.3em] text-slate-400">Threat</div>
-          <div className="text-4xl font-bold tabular text-glow-pink">{score}</div>
-          <div className="text-[11px] text-slate-400">/ 100</div>
-          <div className="mt-2 inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 blink" />
+          <div
+            className={`text-[10px] font-semibold uppercase tracking-[0.28em] ${
+              light ? "text-[var(--rn-ink-faint)]" : "text-slate-400"
+            }`}
+          >
+            Threat
+          </div>
+          <div
+            className={`text-4xl font-bold tabular ${
+              light ? "text-[var(--rn-ink)]" : "text-glow-pink"
+            }`}
+          >
+            {score}
+          </div>
+          <div
+            className={`text-[11px] ${light ? "text-[var(--rn-ink-faint)]" : "text-slate-400"}`}
+          >
+            / 100
+          </div>
+          <div
+            className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+              light
+                ? "border border-[var(--rn-border)] bg-[var(--rn-bg-soft)] text-[var(--rn-ink-soft)]"
+                : "border border-white/10 bg-white/5"
+            }`}
+          >
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${light ? "bg-[#189e75]" : "bg-emerald-400 blink"}`}
+            />
             AI {Math.round(confidence)}%
           </div>
         </div>

@@ -50,6 +50,7 @@ export default function MapView({
   path,
   dangerZones = [],
   height = 520,
+  light = false,
 }: {
   center: [number, number];
   zoom?: number;
@@ -57,12 +58,18 @@ export default function MapView({
   path?: [number, number][];
   dangerZones?: { center: [number, number]; radius: number; color: string; label: string }[];
   height?: number;
+  light?: boolean;
 }) {
   const colorFor = (s?: string) =>
     s === "CRITICAL" ? "#ff3d7f" : s === "HIGH" ? "#ff8a3d" : s === "MEDIUM" ? "#ffb020" : "#38e8ff";
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-white/10" style={{ height }}>
+    <div
+      className={`relative overflow-hidden rounded-2xl border ${
+        light ? "border-[#e5ded1]" : "border-white/10"
+      }`}
+      style={{ height }}
+    >
       <MapContainer center={center} zoom={zoom} style={{ height: "100%", width: "100%" }} zoomControl={true}>
         <TileLayer
           attribution='&copy; Google Maps'
