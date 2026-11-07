@@ -1,9 +1,9 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
-import { MapPin, Navigation, Battery, Activity, Clock, ShieldCheck, Radio, Crosshair } from "lucide-react";
+import { MapPin, Navigation, Battery, Activity, Clock, ShieldCheck, Radio, Crosshair, Siren } from "lucide-react";
 import { useSafetyStore } from "../store/safetyStore";
 import MapView from "../components/MapView";
-import { StatCard, Pill } from "../components/ui";
+import { StatCard, Pill, PageHeader } from "../components/ui";
 import { useAuthStore } from "../store/authStore";
 import { sosApi } from "../api/endpoints";
 import { useJourneyStore } from "../store/journeyStore";
@@ -300,26 +300,35 @@ export default function LiveTracking() {
       )}
 
       {/* ── Header ──────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <div className="text-[11px] uppercase tracking-[0.3em] text-cyan-300">Live Tracking</div>
-          <h1 className="text-3xl lg:text-4xl font-black mt-1">
-            {responderMode ? "🚨 Responding to Emergency" : "Real-time Guardian Visibility"}
-          </h1>
-          <p className="text-slate-400 mt-1 text-sm flex items-center gap-2">
-            <Crosshair className="w-3.5 h-3.5" />
+      <PageHeader
+        eyebrow="Live tracking"
+        title={
+          responderMode
+            ? <>Responding to <em>emergency</em></>
+            : <>Real-time <em>guardian</em> visibility</>
+        }
+        description={
+          <span className="flex items-center gap-2">
+            <Crosshair className="h-3.5 w-3.5" aria-hidden="true" />
             {myPos
               ? `Your GPS: ${myPos[0].toFixed(5)}, ${myPos[1].toFixed(5)}`
-              : gpsError ? "GPS unavailable — enable location permission" : "Acquiring GPS…"}
-          </p>
-        </div>
-        {!responderMode && (
-          <Pill tone="emerald">ENCRYPTED STREAM</Pill>
-        )}
-        {responderMode && (
-          <Pill tone="pink">RESPONDER MODE ACTIVE</Pill>
-        )}
-      </div>
+              : gpsError
+                ? "GPS unavailable — enable location permission"
+                : "Acquiring GPS…"}
+          </span>
+        }
+        actions={
+          !responderMode ? (
+            <Pill tone="emerald">
+              <span className="rn-dot" aria-hidden="true" /> Encrypted stream
+            </Pill>
+          ) : (
+            <Pill tone="pink">
+              <Siren className="h-3 w-3" aria-hidden="true" /> Responder mode active
+            </Pill>
+          )
+        }
+      />
 
       {/* ── Stat Cards ──────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
