@@ -5,13 +5,11 @@ export default function ThreatGauge({
   score,
   confidence,
   size = 220,
-  light = false,
 }: {
   score: number;
   level?: RiskLevel;
   confidence: number;
   size?: number;
-  light?: boolean;
 }) {
   const radius = size / 2 - 18;
   const circumference = 2 * Math.PI * radius;
@@ -25,10 +23,14 @@ export default function ThreatGauge({
   }, [score]);
 
   const gradId = `tg-${score}`;
-  const track = light ? "rgba(20,34,31,0.08)" : "rgba(255,255,255,0.08)";
 
   return (
-    <div className="relative" style={{ width: size, height: size }}>
+    <div
+      className="relative"
+      style={{ width: size, height: size }}
+      role="img"
+      aria-label={`Threat score ${score} out of 100, AI confidence ${Math.round(confidence)} percent`}
+    >
       <svg width={size} height={size} className="-rotate-90">
         <defs>
           <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
@@ -40,7 +42,7 @@ export default function ThreatGauge({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke={track}
+          stroke="rgba(20,34,31,0.08)"
           strokeWidth={12}
           fill="none"
         />
@@ -59,35 +61,17 @@ export default function ThreatGauge({
       </svg>
       <div className="absolute inset-0 grid place-items-center">
         <div className="text-center">
-          <div
-            className={`text-[10px] font-semibold uppercase tracking-[0.28em] ${
-              light ? "text-[var(--rn-ink-faint)]" : "text-slate-400"
-            }`}
-          >
+          <div className="text-[10px] font-semibold uppercase tracking-[0.28em] text-[var(--rn-ink-faint)]">
             Threat
           </div>
-          <div
-            className={`text-4xl font-bold tabular ${
-              light ? "text-[var(--rn-ink)]" : "text-glow-pink"
-            }`}
-          >
+          <div className="text-4xl font-bold tabular text-[var(--rn-ink)]">
             {score}
           </div>
-          <div
-            className={`text-[11px] ${light ? "text-[var(--rn-ink-faint)]" : "text-slate-400"}`}
-          >
+          <div className="text-[11px] text-[var(--rn-ink-faint)]">
             / 100
           </div>
-          <div
-            className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-              light
-                ? "border border-[var(--rn-border)] bg-[var(--rn-bg-soft)] text-[var(--rn-ink-soft)]"
-                : "border border-white/10 bg-white/5"
-            }`}
-          >
-            <span
-              className={`h-1.5 w-1.5 rounded-full ${light ? "bg-[#189e75]" : "bg-emerald-400 blink"}`}
-            />
+          <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-[var(--rn-border)] bg-[var(--rn-bg-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--rn-ink-soft)]">
+            <span className="h-1.5 w-1.5 rounded-full bg-[var(--rn-emerald)]" />
             AI {Math.round(confidence)}%
           </div>
         </div>

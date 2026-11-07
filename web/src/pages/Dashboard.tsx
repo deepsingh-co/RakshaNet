@@ -8,12 +8,16 @@ import {
   ArrowRight,
   ArrowUpRight,
   Battery,
+  CheckCircle2,
   Flame,
   Heart,
   MapPin,
   Minus,
+  Navigation,
+  Radio,
   Route,
   ShieldAlert,
+  ShieldCheck,
   Siren,
   Sparkles,
   Users,
@@ -22,6 +26,7 @@ import { useSafetyStore } from "../store/safetyStore";
 import { useAuthStore } from "../store/authStore";
 import ThreatGauge from "../components/ThreatGauge";
 import MapView from "../components/MapView";
+import { StatCard } from "../components/ui";
 import {
   Area,
   AreaChart,
@@ -37,8 +42,6 @@ const riskSeries = Array.from({ length: 32 }, (_, i) => ({
   risk: Math.round(30 + Math.sin(i / 3) * 18 + Math.random() * 10),
   safe: Math.round(65 - Math.sin(i / 3) * 12 + Math.random() * 6),
 }));
-
-const metricColor = (color: string) => ({ "--rn-metric-color": color } as CSSProperties);
 
 const insights = [
   {
@@ -63,12 +66,20 @@ const insights = [
   },
 ];
 
+const readiness = [
+  ["SOS pipeline", "Armed"],
+  ["Guardian relay", "4 online"],
+  ["Voice guard", "Listening"],
+  ["Offline mesh", "12 peers"],
+  ["Location fix", "8 m"],
+];
+
 const health = [
   ["Spring Boot", "OK"],
   ["PostgreSQL", "OK"],
   ["FastAPI AI", "OK"],
   ["Twilio", "ARMED"],
-  ["WebSocket", "14.2k msgs/s"],
+  ["WebSocket", "14.2k/s"],
   ["Google Maps", "OK"],
 ];
 
@@ -104,40 +115,28 @@ export default function Dashboard() {
   }, [tick, startTrackingLocation]);
 
   const firstName = user?.name?.split(" ")[0] || "there";
-  const trendTone =
-    riskLevel === "CRITICAL" || riskLevel === "HIGH"
-      ? "is-rose"
-      : riskLevel === "MEDIUM"
-        ? "is-amber"
-        : "is-emerald";
 
   return (
-    <div className="rn-page">
-      <div className="space-y-5">
-        {/* ── Header ─────────────────────────────────────────────── */}
-        <div className="rn-dash-head">
-          <div>
-            <span className="rn-eyebrow">Command deck</span>
-            <h1 className="rn-display rn-dash-title">
-              {greeting()}, <em>{firstName}</em>
-            </h1>
-            <p className="rn-dash-sub">
-              Your safety copilot is watching 48 live signals. Everything below is
-              aggregated from this device first — the network is a bonus, not a
-              dependency.
-            </p>
-          </div>
+    <div className="rn-dash">
+      {/* ── Command hero ─────────────────────────────────────────── */}
+      <motion.section
+        className="rn-command-hero"
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <div className="rn-command-copy">
+          <span className="rn-eyebrow">Command deck · live safety intelligence</span>
+          <h1 className="rn-display rn-command-title">
+            {greeting()}, <em>{firstName}</em>.
+          </h1>
+          <p className="rn-command-sub">
+            Your safety copilot is watching 48 live signals. Everything below starts
+            on this device first — the network is a bonus, never a dependency.
+          </p>
 
-          <div className="rn-dash-actions">
-            <span className={`rn-pill ${trendTone}`}>
-              <span className="rn-dot" aria-hidden="true" />
-              {riskLevel} risk
-            </span>
-            <span className="rn-pill is-emerald">
-              <span className="rn-dot" aria-hidden="true" />
-              AI active
-            </span>
-            <Link to="/app/journey" className="rn-btn rn-btn-ghost rn-btn-sm">
+          <div className="rn-command-actions">
+            <Link to="/app/journey" className="rn-btn rn-btn-primary rn-btn-sm">
               <Route className="h-4 w-4" aria-hidden="true" />
               Start a journey
             </Link>
@@ -145,124 +144,135 @@ export default function Dashboard() {
               <Siren className="h-4 w-4" aria-hidden="true" />
               Open SOS
             </Link>
+            <Link to="/app/ai" className="rn-btn rn-btn-ghost rn-btn-sm">
+              <Sparkles className="h-4 w-4" aria-hidden="true" />
+              Ask copilot
+            </Link>
+          </div>
+
+          <div className="rn-command-chips">
+            <span className="rn-command-chip">
+              <span className="rn-dot" aria-hidden="true" />
+              GPS lock · {currentLocation.area}
+            </span>
+            <span className="rn-command-chip">
+              <span className="rn-dot" aria-hidden="true" />
+              {riskLevel} risk
+            </span>
+            <span className="rn-command-chip">
+              <ShieldCheck className="h-3 w-3 text-[var(--rn-primary)]" aria-hidden="true" />
+              AI confidence {Math.round(confidence)}%
+            </span>
+            <span className="rn-command-chip">
+              <Battery className="h-3 w-3 text-[var(--rn-primary)]" aria-hidden="true" />
+              {battery}% device
+            </span>
           </div>
         </div>
 
-        {/* ── Metrics ────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          <div className="rn-metric" style={metricColor("#c23e56")}>
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <div className="rn-metric-label">Threat score</div>
-                <div className="rn-metric-value">
-                  {riskScore}
-                  <span className="ml-1 text-sm font-medium text-[var(--rn-ink-faint)]">/100</span>
-                </div>
-                <div className="rn-metric-hint">Confidence {Math.round(confidence)}%</div>
-              </div>
-              <span className="rn-metric-icon">
-                <ShieldAlert className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
-              </span>
-            </div>
+        <div className="rn-command-radar">
+          <div className="rn-radar-shell">
+            <ThreatGauge score={riskScore} confidence={confidence} size={176} />
           </div>
-
-          <div className="rn-metric" style={metricColor("#0b6b5d")}>
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <div className="rn-metric-label">Heart rate</div>
-                <div className="rn-metric-value">
-                  {Math.round(heartbeat)}
-                  <span className="ml-1 text-sm font-medium text-[var(--rn-ink-faint)]">bpm</span>
-                </div>
-                <div className="rn-metric-hint">Wrist sensor</div>
-              </div>
-              <span className="rn-metric-icon">
-                <Heart className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
-              </span>
+          <div className="rn-radar-meta">
+            <div className="rn-radar-line is-accent">
+              <span>Threat index</span>
+              <strong>{riskScore}/100</strong>
             </div>
-          </div>
-
-          <div className="rn-metric" style={metricColor("#c58a25")}>
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <div className="rn-metric-label">Speed</div>
-                <div className="rn-metric-value">
-                  {speed.toFixed(1)}
-                  <span className="ml-1 text-sm font-medium text-[var(--rn-ink-faint)]">m/s</span>
-                </div>
-                <div className="rn-metric-hint">{speed > 5 ? "Running detected" : "Walking pace"}</div>
-              </div>
-              <span className="rn-metric-icon">
-                <Activity className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
-              </span>
+            <div className="rn-radar-line is-primary">
+              <span>Confidence</span>
+              <strong>{Math.round(confidence)}%</strong>
             </div>
-          </div>
-
-          <div className="rn-metric" style={metricColor("#6d5a8a")}>
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <div className="rn-metric-label">Battery</div>
-                <div className="rn-metric-value">
-                  {battery}
-                  <span className="ml-1 text-sm font-medium text-[var(--rn-ink-faint)]">%</span>
-                </div>
-                <div className="rn-metric-hint">{battery < 20 ? "Low power mode" : "Normal"}</div>
-              </div>
-              <span className="rn-metric-icon">
-                <Battery className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
-              </span>
+            <div className="rn-radar-line">
+              <span>Active alerts</span>
+              <strong>{activeAlerts.length}</strong>
             </div>
           </div>
         </div>
+      </motion.section>
 
-        {/* ── Hero: gauge + map ──────────────────────────────────── */}
-        <div className="rn-hero-grid">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="rn-card"
-          >
-            <div className="rn-card-head">
-              <div>
-                <div className="rn-kicker">Real-time risk</div>
-                <div className="rn-card-title">{riskLevel} risk</div>
-                <div className="rn-card-sub">Aggregated from six live predictors</div>
-              </div>
-              <span className={`rn-pill ${trendTone}`}>{riskLevel}</span>
+      {/* ── Vitals ───────────────────────────────────────────────── */}
+      <section className="rn-kpi-grid" aria-label="Live telemetry">
+        <StatCard
+          label="Threat index"
+          value={
+            <>
+              {riskScore}
+              <small>/100</small>
+            </>
+          }
+          hint={`${riskLevel} risk · ${activeAlerts.length} alerts`}
+          icon={<ShieldAlert className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />}
+          tone="rose"
+          meter={riskScore}
+        />
+        <StatCard
+          label="Heart rate"
+          value={
+            <>
+              {Math.round(heartbeat)}
+              <small>bpm</small>
+            </>
+          }
+          hint="Wrist sensor · live"
+          icon={<Heart className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />}
+          tone="rose"
+        />
+        <StatCard
+          label="Movement"
+          value={
+            <>
+              {speed.toFixed(1)}
+              <small>m/s</small>
+            </>
+          }
+          hint={speed > 5 ? "Running detected" : "Walking pace"}
+          icon={<Activity className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />}
+          tone="amber"
+        />
+        <StatCard
+          label="Battery"
+          value={
+            <>
+              {battery}
+              <small>%</small>
+            </>
+          }
+          hint={battery < 20 ? "Low power mode" : "Normal"}
+          icon={<Battery className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />}
+          tone="emerald"
+          meter={battery}
+        />
+      </section>
+
+      {/* ── Bento: map + signals ─────────────────────────────────── */}
+      <motion.section
+        className="rn-bento"
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, delay: 0.06, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <div className="rn-card rn-span-8">
+          <div className="rn-panel-head">
+            <div>
+              <div className="rn-kicker">Live position</div>
+              <h2 className="rn-panel-title flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-[var(--rn-primary)]" aria-hidden="true" />
+                {currentLocation.area}
+              </h2>
+              <p className="rn-panel-sub">Last fix just now · accuracy 8 m</p>
             </div>
+            <span className="rn-pill is-emerald">
+              <span className="rn-dot" aria-hidden="true" />
+              GPS lock
+            </span>
+          </div>
 
-            <div className="rn-risk-shell mt-3">
-              <ThreatGauge score={riskScore} confidence={confidence} size={212} light />
-            </div>
-
-            <p className="rn-risk-note">
-              Crime density, lighting, crowd, time, route deviation and community
-              intel — recomputed every 1.5 seconds.
-            </p>
-          </motion.div>
-
-          <div className="rn-card">
-            <div className="rn-card-head mb-3">
-              <div>
-                <div className="rn-kicker">Live position</div>
-                <div className="rn-card-title flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-[var(--rn-primary)]" aria-hidden="true" />
-                  {currentLocation.area}
-                </div>
-                <div className="rn-card-sub">Last fix just now · accuracy 8 m</div>
-              </div>
-              <span className="rn-pill is-emerald">
-                <span className="rn-dot" aria-hidden="true" />
-                GPS lock
-              </span>
-            </div>
-
+          <div className="rn-panel-body">
             <MapView
               center={[currentLocation.lat, currentLocation.lng]}
               zoom={14}
-              height={340}
-              light
+              height={326}
               markers={[
                 {
                   position: [currentLocation.lat, currentLocation.lng],
@@ -298,293 +308,329 @@ export default function Dashboard() {
                 {
                   center: [currentLocation.lat - 0.008, currentLocation.lng - 0.012],
                   radius: 220,
-                  color: "#c58a25",
+                  color: "#c9752a",
                   label: "Poor lighting",
                 },
               ]}
             />
           </div>
+
+          <div className="rn-command-chips" style={{ marginTop: "0.8rem" }}>
+            <span className="rn-command-chip">
+              <Navigation className="h-3 w-3" aria-hidden="true" />
+              Heading north · 32 m
+            </span>
+            <span className="rn-command-chip">
+              <Radio className="h-3 w-3" aria-hidden="true" />
+              Guardian relay online
+            </span>
+            <span className="rn-command-chip">
+              <ShieldCheck className="h-3 w-3" aria-hidden="true" />
+              3 safe points nearby
+            </span>
+          </div>
         </div>
 
-        {/* ── Mid: timeline + factors ────────────────────────────── */}
-        <div className="grid gap-4 lg:grid-cols-3">
-          <div className="rn-card lg:col-span-2">
-            <div className="rn-card-head">
-              <div>
-                <div className="rn-kicker">Last hour</div>
-                <div className="rn-card-title">Risk timeline</div>
-                <div className="rn-card-sub">AI predictions alongside observed safety</div>
+        <div className="rn-card rn-span-4">
+          <div className="rn-panel-head">
+            <div>
+              <div className="rn-kicker">Six predictors</div>
+              <h2 className="rn-panel-title">Threat signals</h2>
+              <p className="rn-panel-sub">Higher means more risk right now</p>
+            </div>
+            <span className="rn-pill is-amber">{threatFactors.length} active</span>
+          </div>
+
+          <div className="rn-panel-body">
+            {threatFactors.map((factor) => (
+              <div key={factor.label} className="rn-factor">
+                <div className="rn-factor-top">
+                  <span className="rn-factor-label">{factor.label}</span>
+                  <span className="rn-factor-value">
+                    {factor.value}
+                    {factor.trend === "up" ? (
+                      <ArrowUpRight
+                        className="h-3.5 w-3.5 text-[var(--rn-accent)]"
+                        aria-label="trending up"
+                      />
+                    ) : factor.trend === "down" ? (
+                      <ArrowDownRight
+                        className="h-3.5 w-3.5 text-[var(--rn-primary)]"
+                        aria-label="trending down"
+                      />
+                    ) : (
+                      <Minus
+                        className="h-3.5 w-3.5 text-[var(--rn-ink-faint)]"
+                        aria-label="steady"
+                      />
+                    )}
+                  </span>
+                </div>
+                <div
+                  className="rn-factor-track"
+                  role="progressbar"
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={factor.value}
+                  aria-label={factor.label}
+                >
+                  <div className="rn-factor-fill" style={{ width: `${factor.value}%` }} />
+                </div>
               </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Bento: timeline + alerts ───────────────────────────── */}
+        <div className="rn-card rn-span-8">
+          <div className="rn-panel-head">
+            <div>
+              <div className="rn-kicker">Last hour</div>
+              <h2 className="rn-panel-title">Risk timeline</h2>
+              <p className="rn-panel-sub">AI predictions alongside observed safety</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="rn-pill is-rose">
+                <span className="rn-dot" aria-hidden="true" />
+                Risk
+              </span>
               <span className="rn-pill is-emerald">
+                <span className="rn-dot" aria-hidden="true" />
+                Safety
+              </span>
+              <span className="rn-pill">
                 <span className="rn-dot" aria-hidden="true" />
                 Live
               </span>
             </div>
-
-            <div className="rn-chart-frame">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={riskSeries} margin={{ top: 10, right: 6, left: -18, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="rn-risk" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#c23e56" stopOpacity={0.28} />
-                      <stop offset="100%" stopColor="#c23e56" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="rn-safe" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#0b6b5d" stopOpacity={0.22} />
-                      <stop offset="100%" stopColor="#0b6b5d" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 6" stroke="#e5ded1" vertical={false} />
-                  <XAxis
-                    dataKey="t"
-                    stroke="#5c6864"
-                    fontSize={11}
-                    tickLine={false}
-                    axisLine={false}
-                    interval={7}
-                  />
-                  <YAxis
-                    stroke="#5c6864"
-                    fontSize={11}
-                    tickLine={false}
-                    axisLine={false}
-                    domain={[0, 100]}
-                  />
-                  <Tooltip
-                    cursor={{ stroke: "#d5cbba", strokeDasharray: "4 4" }}
-                    contentStyle={{
-                      background: "#fffdf8",
-                      border: "1px solid #e5ded1",
-                      borderRadius: 12,
-                      fontSize: 12,
-                      color: "#14221f",
-                      boxShadow: "0 14px 34px -24px rgba(16,43,39,0.35)",
-                    }}
-                    labelStyle={{ color: "#5c6864", fontSize: 11 }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="risk"
-                    name="Risk"
-                    stroke="#c23e56"
-                    strokeWidth={2.2}
-                    fill="url(#rn-risk)"
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="safe"
-                    name="Safety"
-                    stroke="#0b6b5d"
-                    strokeWidth={2}
-                    fill="url(#rn-safe)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
           </div>
 
-          <div className="rn-card">
-            <div className="rn-card-head">
-              <div>
-                <div className="rn-kicker">Six predictors</div>
-                <div className="rn-card-title">Threat signals</div>
-                <div className="rn-card-sub">Higher means more risk right now</div>
-              </div>
-              <span className="rn-pill is-amber">{threatFactors.length} active</span>
-            </div>
+          <div className="rn-chart-frame">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={riskSeries} margin={{ top: 10, right: 6, left: -18, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="rn-risk" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#c23e56" stopOpacity={0.24} />
+                    <stop offset="100%" stopColor="#c23e56" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="rn-safe" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#0b6b5d" stopOpacity={0.2} />
+                    <stop offset="100%" stopColor="#0b6b5d" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 6" stroke="rgba(20,34,31,0.1)" vertical={false} />
+                <XAxis
+                  dataKey="t"
+                  stroke="#5c6864"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                  interval={7}
+                />
+                <YAxis
+                  stroke="#5c6864"
+                  fontSize={11}
+                  tickLine={false}
+                  axisLine={false}
+                  domain={[0, 100]}
+                />
+                <Tooltip
+                  cursor={{ stroke: "#d5cbba", strokeDasharray: "4 4" }}
+                  contentStyle={{
+                    background: "#fffdf8",
+                    border: "1px solid #e5ded1",
+                    borderRadius: 12,
+                    fontSize: 12,
+                    color: "#14221f",
+                    boxShadow: "0 14px 34px -24px rgba(16,43,39,0.35)",
+                  }}
+                  labelStyle={{ color: "#5c6864", fontSize: 11 }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="risk"
+                  name="Risk"
+                  stroke="#c23e56"
+                  strokeWidth={2.2}
+                  fill="url(#rn-risk)"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="safe"
+                  name="Safety"
+                  stroke="#0b6b5d"
+                  strokeWidth={2}
+                  fill="url(#rn-safe)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
 
-            <div className="mt-3">
-              {threatFactors.map((factor) => (
-                <div key={factor.label} className="rn-factor">
-                  <div className="rn-factor-top">
-                    <span className="rn-factor-label">{factor.label}</span>
-                    <span className="rn-factor-value">
-                      {factor.value}
-                      {factor.trend === "up" ? (
-                        <ArrowUpRight
-                          className="h-3.5 w-3.5 text-[var(--rn-accent)]"
-                          aria-label="trending up"
-                        />
-                      ) : factor.trend === "down" ? (
-                        <ArrowDownRight
-                          className="h-3.5 w-3.5 text-[var(--rn-primary)]"
-                          aria-label="trending down"
-                        />
-                      ) : (
-                        <Minus
-                          className="h-3.5 w-3.5 text-[var(--rn-ink-faint)]"
-                          aria-label="steady"
-                        />
-                      )}
+        <div className="rn-card rn-span-4 flex flex-col">
+          <div className="rn-panel-head">
+            <div>
+              <div className="rn-kicker">Citywide network</div>
+              <h2 className="rn-panel-title">Active alerts</h2>
+              <p className="rn-panel-sub">{activeAlerts.length} live alerts · newest first</p>
+            </div>
+            <span className="rn-pill is-rose">
+              <span className="rn-dot" aria-hidden="true" />
+              Live
+            </span>
+          </div>
+
+          <div className="rn-panel-body">
+            {activeAlerts.slice(0, 3).map((alert) => (
+              <div key={alert.id} className="rn-alert-row">
+                <span
+                  className={`rn-alert-avatar ${
+                    alert.level === "CRITICAL"
+                      ? "is-critical"
+                      : alert.level === "HIGH"
+                        ? "is-amber"
+                        : ""
+                  }`}
+                  aria-hidden="true"
+                >
+                  {alert.avatar}
+                </span>
+
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="rn-alert-name">{alert.user}</span>
+                    <span
+                      className={`rn-pill ${
+                        alert.level === "CRITICAL"
+                          ? "is-rose"
+                          : alert.level === "HIGH"
+                            ? "is-amber"
+                            : "is-emerald"
+                      }`}
+                    >
+                      {alert.level}
                     </span>
                   </div>
-                  <div
-                    className="rn-factor-track"
-                    role="progressbar"
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-valuenow={factor.value}
-                    aria-label={factor.label}
-                  >
-                    <div className="rn-factor-fill" style={{ width: `${factor.value}%` }} />
+                  <div className="rn-alert-meta">
+                    <MapPin className="h-3 w-3 shrink-0" aria-hidden="true" />
+                    <span className="truncate">
+                      {alert.area} · {alert.trigger}
+                    </span>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
 
-        {/* ── Bottom: alerts + insights ──────────────────────────── */}
-        <div className="grid gap-4 lg:grid-cols-3">
-          <div className="rn-card lg:col-span-2">
-            <div className="rn-card-head">
-              <div>
-                <div className="rn-kicker">Citywide network</div>
-                <div className="rn-card-title">Active alerts</div>
-                <div className="rn-card-sub">
-                  {activeAlerts.length} live alerts · newest first
+                <div className="rn-alert-stats">
+                  <div className="rn-alert-confidence">{alert.confidence}%</div>
+                  <div>{alert.time}</div>
                 </div>
               </div>
-              <span className="rn-pill is-rose">
-                <span className="rn-dot" aria-hidden="true" />
-                Escalating
-              </span>
-            </div>
-
-            <div className="mt-3">
-              {activeAlerts.slice(0, 4).map((alert) => (
-                <div key={alert.id} className="rn-alert-row">
-                  <span
-                    className={`rn-alert-avatar ${
-                      alert.level === "CRITICAL"
-                        ? "is-critical"
-                        : alert.level === "HIGH"
-                          ? "is-amber"
-                          : ""
-                    }`}
-                    aria-hidden="true"
-                  >
-                    {alert.avatar}
-                  </span>
-
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="rn-alert-name">{alert.user}</span>
-                      <span
-                        className={`rn-pill ${
-                          alert.level === "CRITICAL"
-                            ? "is-rose"
-                            : alert.level === "HIGH"
-                              ? "is-amber"
-                              : "is-emerald"
-                        }`}
-                      >
-                        {alert.level}
-                      </span>
-                      {alert.status === "ESCALATED" && (
-                        <span className="rn-pill is-rose">Escalated</span>
-                      )}
-                    </div>
-                    <div className="rn-alert-meta">
-                      <MapPin className="h-3 w-3 shrink-0" aria-hidden="true" />
-                      <span className="truncate">
-                        {alert.area} · {alert.trigger}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="rn-alert-stats">
-                    <div className="rn-alert-confidence">{alert.confidence}%</div>
-                    <div>confidence</div>
-                    <div className="mt-1 flex items-center justify-end gap-2">
-                      <span className="inline-flex items-center gap-0.5">
-                        <Heart className="h-3 w-3 text-[var(--rn-accent)]" aria-hidden="true" />
-                        {alert.heartbeat}
-                      </span>
-                      <span className="inline-flex items-center gap-0.5">
-                        <Battery className="h-3 w-3" aria-hidden="true" />
-                        {alert.battery}%
-                      </span>
-                    </div>
-                  </div>
-
-                  <span className="hidden shrink-0 self-start text-[11px] text-[var(--rn-ink-faint)] sm:block">
-                    {alert.time}
-                  </span>
-                </div>
-              ))}
-            </div>
-
-            <Link
-              to="/app/community"
-              className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--rn-primary-strong)] hover:underline"
-            >
-              Open community intel
-              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </Link>
+            ))}
           </div>
 
-          <div className="rn-card">
-            <div className="rn-card-head">
-              <div>
-                <div className="rn-kicker">Personalized</div>
-                <div className="rn-card-title">AI safety copilot</div>
-                <div className="rn-card-sub">What matters in the next 10 minutes</div>
-              </div>
-              <span className="rn-metric-icon" style={metricColor("#0b6b5d")}>
-                <Sparkles className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
-              </span>
-            </div>
-
-            <div className="mt-3">
-              {insights.map((insight) => (
-                <div key={insight.title} className="rn-insight">
-                  <span
-                    className={`rn-insight-dot ${
-                      insight.tone === "primary" ? "" : `is-${insight.tone}`
-                    }`.trim()}
-                    aria-hidden="true"
-                  />
-                  <div>
-                    <div className="rn-insight-title">{insight.title}</div>
-                    <p className="rn-insight-body">{insight.body}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <Link
-              to="/app/ai"
-              className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--rn-primary-strong)] hover:underline"
-            >
-              Ask the copilot
-              <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </Link>
-          </div>
+          <Link
+            to="/app/community"
+            className="mt-auto inline-flex items-center gap-1.5 pt-3 text-xs font-semibold text-[var(--rn-primary-strong)] hover:underline"
+          >
+            Open community intel
+            <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+          </Link>
         </div>
 
-        {/* ── System health ──────────────────────────────────────── */}
-        <div className="rn-health">
-          <span className="rn-health-item">
-            <Route className="h-3.5 w-3.5 text-[var(--rn-primary)]" aria-hidden="true" />
-            <strong>System health</strong>
-          </span>
-          {health.map(([name, value]) => (
-            <span key={name} className="rn-health-item">
-              {name}
-              <strong>{value}</strong>
+        {/* ── Bento: copilot + readiness ─────────────────────────── */}
+        <div className="rn-card rn-span-7 flex flex-col">
+          <div className="rn-panel-head">
+            <div>
+              <div className="rn-kicker">Personalized</div>
+              <h2 className="rn-panel-title">AI safety copilot</h2>
+              <p className="rn-panel-sub">What matters in the next 10 minutes</p>
+            </div>
+            <span className="rn-kpi-icon" style={{ "--tone": "var(--rn-primary)" } as CSSProperties}>
+              <Sparkles className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />
             </span>
-          ))}
-          <span className="rn-health-item ml-auto">
-            <Flame className="h-3.5 w-3.5 text-[var(--rn-accent)]" aria-hidden="true" />
-            <strong>All clear</strong>
-          </span>
-          <span className="rn-health-item">
-            <Users className="h-3.5 w-3.5 text-[var(--rn-violet)]" aria-hidden="true" />
-            <strong>2,417</strong> guardians
-          </span>
+          </div>
+
+          <div className="rn-panel-body">
+            {insights.map((insight) => (
+              <div key={insight.title} className="rn-insight">
+                <span
+                  className={`rn-insight-dot ${
+                    insight.tone === "primary" ? "" : `is-${insight.tone}`
+                  }`.trim()}
+                  aria-hidden="true"
+                />
+                <div>
+                  <div className="rn-insight-title">{insight.title}</div>
+                  <p className="rn-insight-body">{insight.body}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Link
+            to="/app/ai"
+            className="mt-auto inline-flex items-center gap-1.5 pt-3 text-xs font-semibold text-[var(--rn-primary-strong)] hover:underline"
+          >
+            Ask the copilot
+            <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+          </Link>
         </div>
-      </div>
+
+        <div className="rn-card rn-span-5 flex flex-col">
+          <div className="rn-panel-head">
+            <div>
+              <div className="rn-kicker">Operational readiness</div>
+              <h2 className="rn-panel-title">Everything armed</h2>
+              <p className="rn-panel-sub">Checked every 1.5 seconds on this device</p>
+            </div>
+            <span className="rn-pill is-emerald">
+              <CheckCircle2 className="h-3 w-3" aria-hidden="true" />
+              All clear
+            </span>
+          </div>
+
+          <div className="rn-readiness mt-3">
+            {readiness.map(([label, value]) => (
+              <div key={label} className="rn-ready-row">
+                <span>{label}</span>
+                <strong>
+                  <span className="rn-dot" aria-hidden="true" />
+                  {value}
+                </strong>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-3">
+            <div className="rn-kicker" style={{ marginBottom: "0.45rem" }}>
+              Service mesh
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
+              {health.map(([name, value]) => (
+                <div
+                  key={name}
+                  className="flex items-center justify-between rounded-lg border border-[var(--rn-border)] bg-[var(--rn-bg-soft)] px-2 py-1.5"
+                >
+                  <span className="text-[10px] text-[var(--rn-ink-faint)]">{name}</span>
+                  <span className="text-[10px] font-semibold text-[var(--rn-primary-strong)]">
+                    {value}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-auto flex flex-wrap items-center justify-between gap-2 pt-3 text-[10px] text-[var(--rn-ink-faint)]">
+            <span className="inline-flex items-center gap-1.5">
+              <Flame className="h-3.5 w-3.5 text-[var(--rn-accent)]" aria-hidden="true" />
+              No critical incidents
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Users className="h-3.5 w-3.5 text-[var(--rn-violet)]" aria-hidden="true" />
+              <strong className="text-[var(--rn-primary-strong)]">2,417</strong> guardians
+            </span>
+          </div>
+        </div>
+      </motion.section>
     </div>
   );
 }

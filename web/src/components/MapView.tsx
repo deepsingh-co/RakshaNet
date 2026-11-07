@@ -50,7 +50,6 @@ export default function MapView({
   path,
   dangerZones = [],
   height = 520,
-  light = false,
 }: {
   center: [number, number];
   zoom?: number;
@@ -58,18 +57,12 @@ export default function MapView({
   path?: [number, number][];
   dangerZones?: { center: [number, number]; radius: number; color: string; label: string }[];
   height?: number;
-  light?: boolean;
 }) {
   const colorFor = (s?: string) =>
     s === "CRITICAL" ? "#ff3d7f" : s === "HIGH" ? "#ff8a3d" : s === "MEDIUM" ? "#ffb020" : "#38e8ff";
 
   return (
-    <div
-      className={`relative overflow-hidden rounded-2xl border ${
-        light ? "border-[#e5ded1]" : "border-white/10"
-      }`}
-      style={{ height }}
-    >
+    <div className="rn-map-shell" style={{ height }}>
       <MapContainer center={center} zoom={zoom} style={{ height: "100%", width: "100%" }} zoomControl={true}>
         <TileLayer
           attribution='&copy; Google Maps'
@@ -92,7 +85,7 @@ export default function MapView({
           <>
             <Polyline
               positions={path as LatLngExpression[]}
-              pathOptions={{ color: "#38e8ff", weight: 5, opacity: 0.9, dashArray: "0" }}
+              pathOptions={{ color: "#0b6b5d", weight: 5, opacity: 0.9, dashArray: "0" }}
             />
             <Polyline
               positions={path as LatLngExpression[]}
@@ -127,7 +120,7 @@ export default function MapView({
       </MapContainer>
 
       {/* Scan overlay */}
-      <div className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="scan-line" />
       </div>
     </div>
