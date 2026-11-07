@@ -1,15 +1,18 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import {
-  Mic,
-  Siren,
-  Plus,
-  Trash2,
-  RotateCcw,
-  PhoneCall,
+  AudioLines,
   CheckCircle2,
+  Languages,
+  Mic,
+  PhoneCall,
+  Plus,
   Radio,
+  RotateCcw,
+  ShieldCheck,
+  Siren,
   Sparkles,
+  X,
+  Zap,
 } from "lucide-react";
 import {
   getTriggerKeywords,
@@ -23,22 +26,42 @@ import { useSafetyStore } from "../store/safetyStore";
 
 interface IntegratedVoiceGuardProps {
   variant?: "full" | "compact" | "drawer";
+  onClose?: () => void;
 }
+
+const DEFAULT_METER = [22, 34, 52, 68, 44, 30, 58, 72, 50, 36, 62, 46];
+
+const FLAGSHIP_WORD = /picha|peecha|following/i;
 
 export function IntegratedVoiceGuard({
   variant = "full",
+  onClose,
 }: IntegratedVoiceGuardProps) {
   const [keywords, setKeywords] = useState<string[]>([]);
   const [newWord, setNewWord] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [heardTranscript, setHeardTranscript] = useState("");
   const [feedbackMsg, setFeedbackMsg] = useState("");
-  const [audioMeter, setAudioMeter] = useState<number[]>([18, 28, 45, 60, 32, 22]);
+  const [micBlocked, setMicBlocked] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
+  const [supported, setSupported] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return Boolean(
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
+    );
+  });
+  const [audioMeter, setAudioMeter] = useState<number[]>(DEFAULT_METER);
 
-  const recognitionRef = useRef<any>(null);
+  const inputId = useId();
   const isMountedRef = useRef(true);
+  const feedbackTimer = useRef<number | null>(null);
 
-  // Load trigger words
+  const flash = useCallback((message: string) => {
+    setFeedbackMsg(message);
+    if (feedbackTimer.current) window.clearTimeout(feedbackTimer.current);
+    feedbackTimer.current = window.setTimeout(() => setFeedbackMsg(""), 4000);
+  }, []);
+
   const refreshKeywords = useCallback(() => {
     setKeywords(getTriggerKeywords());
   }, []);
@@ -50,16 +73,22 @@ export function IntegratedVoiceGuard({
     return () => window.removeEventListener("rakshanet:keywords-updated", handleUpdate);
   }, [refreshKeywords]);
 
-  // Handle triggered phrase
-  const handleTrigger = useCallback(
-    async (phrase: string, source: "gnani.ai" | "web-speech" | "manual-test") => {
-      setFeedbackMsg(`🚨 Activated by "${phrase}"! Alerts & Demo Call dispatched.`);
-      await executeVoiceDistressDispatch(phrase, source);
+  useEffect(
+    () => () => {
+      if (feedbackTimer.current) window.clearTimeout(feedbackTimer.current);
     },
     []
   );
 
-  // Continuous auto-listening without requiring clicks
+  const handleTrigger = useCallback(
+    async (phrase: string, source: "gnani.ai" | "web-speech" | "manual-test") => {
+      flash(`Activated by “${phrase}”. Alerts and the demo call are being dispatched.`);
+      await executeVoiceDistressDispatch(phrase, source);
+    },
+    [flash]
+  );
+
+  // Continuous auto-listening without requiring clicks.
   useEffect(() => {
     isMountedRef.current = true;
     if (typeof window === "undefined") return;
@@ -67,24 +96,36 @@ export function IntegratedVoiceGuard({
     const SpeechRecognition =
       (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
-    if (!SpeechRecognition) return;
+    if (!SpeechRecognition) {
+      setSupported(false);
+      setIsListening(false);
+      return;
+    }
+
+    setSupported(true);
 
     let recog: any = null;
+    let blocked = false;
 
-    const startAutoListening = () => {
+    const startListening = () => {
       try {
         if (recog) {
           try {
             recog.abort();
-          } catch { }
+          } catch {
+            /* ignore */
+          }
         }
+
         recog = new SpeechRecognition();
         recog.continuous = true;
         recog.interimResults = true;
         recog.lang = "hi-IN";
 
         recog.onstart = () => {
-          if (isMountedRef.current) setIsListening(true);
+          if (!isMountedRef.current) return;
+          setIsListening(true);
+          setMicBlocked(false);
         };
 
         recog.onresult = (event: any) => {
@@ -92,17 +133,14 @@ export function IntegratedVoiceGuard({
           for (let i = event.resultIndex; i < event.results.length; i++) {
             text += event.results[i][0].transcript;
           }
-          if (isMountedRef.current) {
-            setHeardTranscript(text);
-            setAudioMeter([
-              Math.floor(25 + Math.random() * 55),
-              Math.floor(35 + Math.random() * 60),
-              Math.floor(45 + Math.random() * 50),
-              Math.floor(30 + Math.random() * 65),
-              Math.floor(40 + Math.random() * 55),
-              Math.floor(20 + Math.random() * 50),
-            ]);
-          }
+          if (!isMountedRef.current) return;
+
+          setHeardTranscript(text.trim());
+          setAudioMeter(
+            Array.from({ length: DEFAULT_METER.length }, () =>
+              Math.floor(20 + Math.random() * 64)
+            )
+          );
 
           const check = checkDistressKeywords(text);
           if (check.isDistress && !useSafetyStore.getState().sosActive) {
@@ -110,54 +148,82 @@ export function IntegratedVoiceGuard({
           }
         };
 
-        recog.onerror = () => {};
+        recog.onerror = (event: any) => {
+          if (!isMountedRef.current) return;
+          const denied =
+            event?.error === "not-allowed" || event?.error === "service-not-allowed";
+          if (denied) {
+            blocked = true;
+            setIsListening(false);
+            setMicBlocked(true);
+          }
+        };
+
         recog.onend = () => {
-          if (isMountedRef.current && !useSafetyStore.getState().sosActive) {
-            try {
-              recog.start();
-            } catch { }
+          if (!isMountedRef.current) return;
+          if (blocked || useSafetyStore.getState().sosActive) {
+            setIsListening(false);
+            return;
+          }
+          try {
+            recog.start();
+          } catch {
+            /* ignore */
           }
         };
 
         recog.start();
-        recognitionRef.current = recog;
-      } catch {}
+      } catch {
+        if (isMountedRef.current) {
+          setSupported(false);
+          setIsListening(false);
+        }
+      }
     };
 
-    startAutoListening();
+    startListening();
 
     return () => {
       isMountedRef.current = false;
       if (recog) {
         try {
           recog.abort();
-        } catch { }
+        } catch {
+          /* ignore */
+        }
       }
     };
-  }, [handleTrigger]);
+  }, [handleTrigger, retryKey]);
 
-  const handleAddWord = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newWord.trim()) return;
-    const updated = addTriggerKeyword(newWord.trim());
+  const handleAddWord = (event: React.FormEvent) => {
+    event.preventDefault();
+    const phrase = newWord.trim();
+    if (!phrase) return;
+
+    const exists = keywords.some(
+      (keyword) => keyword.toLowerCase() === phrase.toLowerCase()
+    );
+    if (exists) {
+      flash(`“${phrase}” is already one of your trigger phrases.`);
+      return;
+    }
+
+    const updated = addTriggerKeyword(phrase);
     setKeywords(updated);
     setNewWord("");
-    setFeedbackMsg(`Added trigger phrase: "${newWord.trim()}"`);
-    setTimeout(() => setFeedbackMsg(""), 3500);
+    flash(`Added trigger phrase “${phrase}”.`);
   };
 
   const handleRemoveWord = (word: string) => {
     const updated = removeTriggerKeyword(word);
     setKeywords(updated);
-    setFeedbackMsg(`Removed: "${word}"`);
-    setTimeout(() => setFeedbackMsg(""), 3500);
+    flash(`Removed “${word}” from your trigger phrases.`);
   };
 
   const handleResetDefaults = () => {
     const updated = resetTriggerKeywords();
     setKeywords(updated);
-    setFeedbackMsg("Restored default trigger phrases.");
-    setTimeout(() => setFeedbackMsg(""), 3500);
+    flash("Restored the default trigger phrases.");
   };
 
   const handleSimulateDemoCall = () => {
@@ -165,183 +231,255 @@ export function IntegratedVoiceGuard({
       new CustomEvent("rakshanet:demo-call", {
         detail: {
           phrase: "Mera koi picha kr raha hai",
-          caller: "🚨 RakshaNet Safety Dispatch",
+          caller: "RakshaNet Safety Dispatch",
           number: "+91 112 • Emergency SOS Desk",
         },
       })
     );
   };
 
-  return (
-    <div
-      className={`glass-strong rounded-3xl ${
-        variant === "compact" ? "p-4 sm:p-5" : "p-6"
-      } border border-pink-500/20 relative overflow-hidden space-y-4`}
-    >
-      {/* Ambient gradient glow */}
-      <div className="absolute top-0 right-0 w-64 h-64 bg-pink-500/10 rounded-full blur-3xl pointer-events-none" />
+  const handleRetryMic = () => {
+    setMicBlocked(false);
+    setIsListening(false);
+    flash("Requesting microphone access again…");
+    setRetryKey((key) => key + 1);
+  };
 
-      {/* Header Bar */}
-      <div className="flex items-center justify-between pb-3 border-b border-white/10 relative z-10">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-pink-500/15 border border-pink-400/30 text-pink-300 grid place-items-center shrink-0">
-            <Mic className="w-5 h-5 text-pink-400 animate-pulse" />
+  const status = !supported
+    ? {
+        label: "Unavailable",
+        toneClass: "is-amber",
+        detail: "This browser can't run speech detection",
+      }
+    : micBlocked
+      ? {
+          label: "Mic blocked",
+          toneClass: "is-rose",
+          detail: "Allow microphone access to resume",
+        }
+      : isListening
+        ? {
+            label: "Listening",
+            toneClass: "is-emerald",
+            detail: "Auto listening · zero-click",
+          }
+        : {
+            label: "Starting",
+            toneClass: "is-amber",
+            detail: "Connecting to the microphone",
+          };
+
+  const barsLive = supported && !micBlocked;
+
+  return (
+    <section
+      className="rn-voice"
+      data-variant={variant}
+      aria-label="AI voice distress guard"
+    >
+      {/* Header ---------------------------------------------------- */}
+      <header className="rn-voice-head">
+        <span className="rn-voice-mark" aria-hidden="true">
+          <Mic className="h-[18px] w-[18px]" strokeWidth={1.9} />
+          <span className={`rn-voice-mark-dot ${isListening ? "is-live" : ""}`} />
+        </span>
+
+        <div className="rn-voice-heading">
+          <div className="rn-voice-kicker">
+            Ambient detection
+            <span className="rn-voice-brand">
+              <Sparkles className="h-2.5 w-2.5" aria-hidden="true" />
+              Gnani.ai
+            </span>
           </div>
+          <h2 className="rn-voice-title">Voice distress guard</h2>
+          <p className="rn-voice-sub">
+            Zero-click monitoring. Say a trigger phrase and your circle is alerted.
+          </p>
+        </div>
+
+        <div className="rn-voice-head-actions">
+          {onClose && (
+            <button
+              type="button"
+              className="rn-voice-close"
+              onClick={onClose}
+              aria-label="Close voice guard"
+              autoFocus
+            >
+              <X className="h-4 w-4" aria-hidden="true" />
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* Live stage ------------------------------------------------ */}
+      <div className="rn-voice-stage">
+        <div className="rn-voice-stage-top">
+          <span className="rn-voice-stage-label">
+            <AudioLines className="h-3.5 w-3.5" aria-hidden="true" />
+            Heard just now
+          </span>
+          <span className={`rn-voice-status ${status.toneClass}`}>
+            <span className="rn-voice-status-dot" aria-hidden="true" />
+            {status.label}
+          </span>
+        </div>
+
+        <div className="rn-voice-wave" aria-hidden="true">
+          {audioMeter.map((height, index) => (
+            <span
+              key={index}
+              className={`rn-voice-bar ${barsLive && isListening ? "is-live" : ""}`}
+              style={{
+                height: `${Math.max(6, Math.min(46, height * 0.62))}px`,
+                animationDelay: `${index * 70}ms`,
+              }}
+            />
+          ))}
+        </div>
+
+        <p
+          className="rn-voice-quote"
+          role="status"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          {heardTranscript ? (
+            `“${heardTranscript}”`
+          ) : (
+            <span className="rn-voice-quote-idle">Waiting for a phrase…</span>
+          )}
+        </p>
+
+        <div className="rn-voice-meta">
+          <span>
+            <Radio className="h-3 w-3" aria-hidden="true" />
+            {status.detail}
+          </span>
+          <span>
+            <Languages className="h-3 w-3" aria-hidden="true" />
+            Hindi + English
+          </span>
+          <span>
+            <Zap className="h-3 w-3" aria-hidden="true" />
+            Dispatch under 1s
+          </span>
+        </div>
+      </div>
+
+      {/* Actions --------------------------------------------------- */}
+      <div className="rn-voice-actions">
+        <button
+          type="button"
+          className="rn-voice-btn is-accent"
+          onClick={() => handleTrigger("Mera koi picha kr raha hai", "manual-test")}
+          title="Simulate a full trigger with SMS, WhatsApp and the demo call"
+        >
+          <Siren className="h-3.5 w-3.5" aria-hidden="true" />
+          Test trigger
+        </button>
+        <button
+          type="button"
+          className="rn-voice-btn"
+          onClick={handleSimulateDemoCall}
+          title="Preview the demo escape call"
+        >
+          <PhoneCall className="h-3.5 w-3.5" aria-hidden="true" />
+          Demo call
+        </button>
+        {micBlocked && (
+          <button type="button" className="rn-voice-btn is-quiet" onClick={handleRetryMic}>
+            <Mic className="h-3.5 w-3.5" aria-hidden="true" />
+            Retry mic
+          </button>
+        )}
+      </div>
+
+      {feedbackMsg && (
+        <div className="rn-voice-feedback" role="status" aria-live="polite" aria-atomic="true">
+          <CheckCircle2 className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <span>{feedbackMsg}</span>
+        </div>
+      )}
+
+      {/* Trigger phrases ------------------------------------------- */}
+      <div className="rn-voice-phrases">
+        <div className="rn-voice-phrases-head">
           <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-white text-sm tracking-wide">
-                AI Voice Distress Guard
-              </span>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-pink-500/20 text-pink-300 border border-pink-400/30 flex items-center gap-1">
-                <Sparkles className="w-2.5 h-2.5" /> Gnani.ai
-              </span>
-            </div>
-            <p className="text-[11px] text-slate-400">
-              Zero-click background detection • Instant SOS alert + Demo Call
+            <h3 className="rn-voice-phrases-title">
+              Trigger phrases
+              <span className="rn-voice-count">{keywords.length}</span>
+            </h3>
+            <p className="rn-voice-phrases-sub">
+              Spoken in Hindi or English. Remove any phrase with its close button.
             </p>
           </div>
-        </div>
-
-        {/* Live Audio Status */}
-        <div className="flex items-center gap-2">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-[11px] font-semibold">
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${
-                isListening ? "bg-emerald-400 animate-ping" : "bg-emerald-400"
-              }`}
-            />
-            <span>Auto Listening</span>
-          </div>
-          <div className="hidden sm:flex items-center gap-0.5 h-4 px-1.5 py-0.5 bg-black/40 rounded-lg border border-white/5">
-            {audioMeter.map((h, i) => (
-              <span
-                key={i}
-                className="w-1 bg-pink-400 rounded-full transition-all duration-150"
-                style={{ height: `${Math.max(4, h / 3.5)}px` }}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Live Input Preview Box */}
-      <div className="glass p-3 rounded-2xl border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <Radio className="w-4 h-4 text-pink-400 shrink-0 animate-pulse" />
-          <div className="min-w-0 truncate">
-            <span className="text-slate-400">Heard: </span>
-            <span className="text-white font-medium italic">
-              {heardTranscript
-                ? `"${heardTranscript}"`
-                : 'Listening... say "Mera koi picha kr raha hai" or any trigger word'}
-            </span>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 shrink-0">
           <button
-            onClick={() => handleTrigger("Mera koi picha kr raha hai", "manual-test")}
-            className="px-3 py-1.5 rounded-xl bg-pink-500/20 hover:bg-pink-500/30 border border-pink-400/30 text-pink-200 font-semibold text-[11px] transition flex items-center gap-1.5 cursor-pointer"
-            title="Simulate full trigger + SMS + Demo Call"
-          >
-            <Siren className="w-3.5 h-3.5 text-pink-400" />
-            Test Voice Trigger
-          </button>
-          <button
-            onClick={handleSimulateDemoCall}
-            className="px-3 py-1.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/30 text-cyan-200 font-semibold text-[11px] transition flex items-center gap-1.5 cursor-pointer"
-            title="Preview demo escape call"
-          >
-            <PhoneCall className="w-3.5 h-3.5 text-cyan-300" />
-            Demo Call
-          </button>
-        </div>
-      </div>
-
-      {/* Toast Feedback */}
-      <AnimatePresence>
-        {feedbackMsg && (
-          <motion.div
-            initial={{ opacity: 0, y: -4 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -4 }}
-            className="p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-400/30 text-emerald-200 text-xs flex items-center gap-2"
-          >
-            <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
-            <span>{feedbackMsg}</span>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Trigger Words Section */}
-      <div className="space-y-2.5 pt-1">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-white uppercase tracking-wider">
-              Configured Trigger Phrases
-            </span>
-            <span className="text-[10px] text-pink-300 font-mono bg-pink-500/20 px-1.5 py-0.5 rounded-full border border-pink-400/30">
-              {keywords.length}
-            </span>
-          </div>
-          <button
+            type="button"
+            className="rn-voice-reset"
             onClick={handleResetDefaults}
-            className="text-[11px] text-slate-400 hover:text-white flex items-center gap-1 transition cursor-pointer"
+            title="Restore the default trigger phrases"
           >
-            <RotateCcw className="w-3 h-3" />
-            Reset Defaults
+            <RotateCcw className="h-3 w-3" aria-hidden="true" />
+            Reset
           </button>
         </div>
 
-        {/* Add Word Form */}
-        <form onSubmit={handleAddWord} className="flex gap-2">
-          <input
-            type="text"
-            value={newWord}
-            onChange={(e) => setNewWord(e.target.value)}
-            placeholder="Add your own custom word (e.g. 'Ghar jaldi aao', 'Code Red')…"
-            className="flex-1 text-xs bg-slate-900/60 border border-white/10 rounded-xl px-3 py-2 text-white outline-none focus:border-pink-500/50 transition placeholder:text-slate-500"
-          />
-          <button
-            type="submit"
-            disabled={!newWord.trim()}
-            className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 disabled:opacity-40 text-white font-bold text-xs flex items-center gap-1 shadow-md shadow-pink-500/20 transition cursor-pointer"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            Fix Word
+        <form className="rn-voice-add" onSubmit={handleAddWord}>
+          <label className="sr-only" htmlFor={inputId}>
+            Add a trigger phrase
+          </label>
+          <div className="rn-voice-input-wrap">
+            <Plus className="rn-voice-input-icon" aria-hidden="true" />
+            <input
+              id={inputId}
+              type="text"
+              value={newWord}
+              onChange={(event) => setNewWord(event.target.value)}
+              placeholder="Add a phrase, e.g. “Code Red”"
+              className="rn-voice-input"
+              autoComplete="off"
+            />
+          </div>
+          <button type="submit" className="rn-voice-add-btn" disabled={!newWord.trim()}>
+            Add
           </button>
         </form>
 
-        {/* Clean Chips */}
-        <div className="flex flex-wrap gap-1.5 pt-1 max-h-36 overflow-y-auto no-scrollbar">
-          {keywords.map((word) => {
-            const isPriority =
-              word.toLowerCase().includes("picha") ||
-              word.toLowerCase().includes("bachao") ||
-              word.toLowerCase().includes("help");
-            return (
-              <span
+        {keywords.length === 0 ? (
+          <p className="rn-voice-empty">
+            No trigger phrases yet. Add one to arm voice detection.
+          </p>
+        ) : (
+          <ul className="rn-voice-chips">
+            {keywords.map((word) => (
+              <li
                 key={word}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition ${
-                  isPriority
-                    ? "bg-pink-500/20 border-pink-400/40 text-pink-200"
-                    : "glass border-white/10 text-slate-300"
-                  }`}
+                className={`rn-voice-chip ${FLAGSHIP_WORD.test(word) ? "is-urgent" : ""}`}
               >
                 <span>{word}</span>
                 <button
+                  type="button"
                   onClick={() => handleRemoveWord(word)}
-                  className="hover:text-red-400 transition p-0.5 cursor-pointer"
-                  title={`Remove "${word}"`}
+                  aria-label={`Remove “${word}”`}
+                  title={`Remove “${word}”`}
                 >
-                  <Trash2 className="w-3 h-3" />
+                  <X className="h-3 w-3" aria-hidden="true" />
                 </button>
-              </span>
-            );
-          })}
-        </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
-    </div>
+
+      <div className="rn-voice-foot">
+        <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
+        <span>
+          Listening runs only while RakshaNet is open. A matching phrase dispatches
+          SOS, SMS and the demo call.
+        </span>
+      </div>
+    </section>
   );
 }
