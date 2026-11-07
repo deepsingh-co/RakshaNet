@@ -3,10 +3,11 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Siren, Mic, Smartphone, Watch, Calculator, Volume2, Video, ShieldCheck,
   Phone, MessageSquare, Send, Flashlight, Camera, Radio, Trash2, Plus, UserPlus,
+  Settings2,
 } from "lucide-react";
 import SOSButton from "../components/SOSButton";
 import { useSafetyStore } from "../store/safetyStore";
-import { Pill } from "../components/ui";
+import { PageHeader, Pill } from "../components/ui";
 import { IntegratedVoiceGuard } from "../components/IntegratedVoiceGuard";
 import { executeVoiceDistressDispatch } from "../services/voiceDistressService";
 
@@ -58,44 +59,59 @@ export default function SOSDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <div className="text-[11px] uppercase tracking-[0.3em] text-pink-300">SOS Center</div>
-        <h1 className="text-3xl lg:text-4xl font-black mt-1">Multi-vector Emergency Activation</h1>
-        <p className="text-slate-400 mt-1 text-sm">6 redundant ways to trigger SOS — even under duress.</p>
-      </div>
+      <PageHeader
+        eyebrow="SOS Center"
+        title={<>Multi-vector <em>emergency</em> activation</>}
+        description="6 redundant ways to trigger SOS — even under duress."
+        actions={
+          <>
+            <Pill tone="emerald">
+              <span className="rn-dot" aria-hidden="true" /> Armed &amp; listening
+            </Pill>
+            <Pill tone="pink">
+              <Siren className="h-3 w-3" aria-hidden="true" /> 6 triggers live
+            </Pill>
+          </>
+        }
+      />
 
-      {/* Ambient Zero-Click Voice Guard Top Status Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-2xl glass border border-pink-500/20">
+      {/* Ambient zero-click Voice Guard status */}
+      <div className="flex flex-col gap-3 rounded-2xl border border-[var(--rn-border)] bg-[var(--rn-surface)] p-3.5 shadow-[var(--rn-shadow-sm)] sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-pink-500/20 border border-pink-400/30 text-pink-300 grid place-items-center shrink-0">
-            <Mic className="w-4 h-4 text-pink-400 animate-pulse" />
+          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-[var(--rn-border)] bg-[var(--rn-accent-soft)] text-[var(--rn-accent)]">
+            <Mic className="h-4 w-4" aria-hidden="true" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-white tracking-wide">AI Voice Guard Active</span>
-              <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-400/30 flex items-center gap-1 font-semibold">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" /> Always Listening
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold tracking-wide text-[var(--rn-ink)]">AI Voice Guard</span>
+              <span className="inline-flex items-center gap-1 rounded-full border border-[var(--rn-border)] bg-[var(--rn-emerald-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--rn-emerald)]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[var(--rn-emerald)] animate-ping" aria-hidden="true" /> Always listening
               </span>
             </div>
-            <p className="text-[11px] text-slate-300 mt-0.5">
-              Say <span className="text-pink-300 font-semibold italic">"Mera koi picha kr raha hai"</span> to trigger emergency SMS, WhatsApp &amp; Demo Call automatically.
+            <p className="mt-0.5 text-[11px] text-[var(--rn-ink-soft)]">
+              Say <span className="font-semibold italic text-[var(--rn-accent-strong)]">“Mera koi picha kr raha hai”</span> to trigger SMS, WhatsApp and a demo call automatically.
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+        <div className="flex shrink-0 items-center gap-2 self-start sm:self-auto">
           <button
+            type="button"
             onClick={() => executeVoiceDistressDispatch("Mera koi picha kr raha hai", "manual-test")}
-            className="px-3 py-1.5 rounded-xl bg-pink-500/20 hover:bg-pink-500/35 border border-pink-400/30 text-pink-200 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
-            title="Instant 1-click test simulation"
+            className="flex min-h-9 items-center gap-1.5 rounded-xl border border-[var(--rn-accent)] bg-[var(--rn-accent)] px-3 py-1.5 text-xs font-semibold text-white transition hover:opacity-90"
+            title="Instant one-click test simulation"
           >
-            <Siren className="w-3.5 h-3.5 text-pink-400" />
-            Test Voice Trigger
+            <Siren className="h-3.5 w-3.5" aria-hidden="true" />
+            Test trigger
           </button>
           <button
+            type="button"
             onClick={() => setShowVoiceGuard(!showVoiceGuard)}
-            className="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer"
+            aria-expanded={showVoiceGuard}
+            aria-controls="voice-guard-panel"
+            className="flex min-h-9 items-center gap-1.5 rounded-xl border border-[var(--rn-border-strong)] bg-[var(--rn-surface)] px-3 py-1.5 text-xs font-semibold text-[var(--rn-ink)] transition hover:bg-[var(--rn-bg-soft)]"
           >
-            {showVoiceGuard ? "Hide Words" : "Fix Words ⚙️"}
+            <Settings2 className="h-3.5 w-3.5" aria-hidden="true" />
+            {showVoiceGuard ? "Hide phrases" : "Edit phrases"}
           </button>
         </div>
       </div>
@@ -104,6 +120,7 @@ export default function SOSDashboard() {
       <AnimatePresence>
         {showVoiceGuard && (
           <motion.div
+            id="voice-guard-panel"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
@@ -156,7 +173,7 @@ export default function SOSDashboard() {
 
       <div className="grid lg:grid-cols-3 gap-6">
         {/* SOS core */}
-        <div className="lg:col-span-2 glass-strong p-8 rounded-3xl">
+        <div className="rn-sos-stage lg:col-span-2 p-8">
           <div className="text-center">
             <div className="text-xs uppercase tracking-widest text-slate-400">Press & hold to activate</div>
             <div className="mt-6 grid place-items-center">
@@ -178,16 +195,17 @@ export default function SOSDashboard() {
                     useSafetyStore.getState().triggerSOS(t.action);
                   }
                 }}
-                className={`group text-left glass p-4 rounded-2xl hover:border-pink-400/30 border transition ${t.action === "voice-trigger" && showVoiceGuard
-                    ? "border-pink-500/50 bg-pink-500/10"
-                    : "border-transparent"
-                  }`}
+                className={`group text-left rounded-2xl border p-4 transition ${
+                  t.action === "voice-trigger" && showVoiceGuard
+                    ? "border-[var(--rn-accent)] bg-[var(--rn-accent-soft)]"
+                    : "border-[var(--rn-border)] bg-[var(--rn-surface)] hover:border-[var(--rn-primary)]"
+                }`}
               >
-                <div className="w-10 h-10 rounded-xl bg-pink-500/15 text-pink-300 grid place-items-center mb-3 group-hover:scale-110 transition">
-                  <t.icon className="w-5 h-5" />
+                <div className="mb-3 grid h-10 w-10 place-items-center rounded-xl bg-[var(--rn-accent-soft)] text-[var(--rn-accent)] transition group-hover:scale-110">
+                  <t.icon className="h-5 w-5" aria-hidden="true" />
                 </div>
-                <div className="font-semibold text-sm">{t.label}</div>
-                <div className="text-xs text-slate-400">{t.sub}</div>
+                <div className="text-sm font-semibold text-[var(--rn-ink)]">{t.label}</div>
+                <div className="text-xs text-[var(--rn-ink-faint)]">{t.sub}</div>
               </button>
             ))}
           </div>
@@ -196,29 +214,66 @@ export default function SOSDashboard() {
         {/* Side */}
         <div className="space-y-4">
           {/* Fake call */}
-          <div className="glass-strong p-5 rounded-3xl">
-            <div className="flex items-center gap-2">
-              <Phone className="w-4 h-4 text-cyan-300" />
-              <div className="font-bold">Fake Call Escape</div>
+          <div className="rounded-3xl border border-[var(--rn-border)] bg-[var(--rn-surface)] p-5 shadow-[var(--rn-shadow-sm)]">
+            <div className="flex items-start gap-2.5">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-[var(--rn-primary-soft)] text-[var(--rn-primary-strong)]">
+                <Phone className="h-4 w-4" aria-hidden="true" />
+              </span>
+              <div>
+                <div className="text-sm font-bold text-[var(--rn-ink)]">Fake call escape</div>
+                <p className="mt-0.5 text-[11px] leading-relaxed text-[var(--rn-ink-faint)]">
+                  Realistic ringtone to exit uncomfortable situations.
+                </p>
+              </div>
             </div>
-            <p className="text-xs text-slate-400 mt-1">Realistic ringtone to exit uncomfortable situations.</p>
             <div className="mt-3 grid grid-cols-2 gap-2">
-              <button onClick={() => startFakeCall("Mom • Sunita")} className="text-xs py-2 glass-chip hover:bg-white/10">Mom</button>
-              <button onClick={() => startFakeCall("Rahul • Brother")} className="text-xs py-2 glass-chip hover:bg-white/10">Brother</button>
-              <button onClick={() => startFakeCall("Delhi Police")} className="text-xs py-2 glass-chip hover:bg-white/10">Police</button>
-              <button onClick={() => startFakeCall("Unknown")} className="text-xs py-2 glass-chip hover:bg-white/10">Unknown</button>
+              {[
+                { label: "Mom", caller: "Mom • Sunita" },
+                { label: "Brother", caller: "Rahul • Brother" },
+                { label: "Police", caller: "Delhi Police" },
+                { label: "Unknown", caller: "Unknown" },
+              ].map((person) => (
+                <button
+                  key={person.label}
+                  type="button"
+                  onClick={() => startFakeCall(person.caller)}
+                  className="min-h-10 rounded-xl border border-[var(--rn-border-strong)] bg-[var(--rn-bg-soft)] px-3 text-xs font-semibold text-[var(--rn-ink)] transition hover:border-[var(--rn-primary)] hover:bg-[var(--rn-primary-soft)]"
+                >
+                  {person.label}
+                </button>
+              ))}
             </div>
             <AnimatePresence>
               {fakeCall.on && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                  className="mt-3 glass-strong p-4 rounded-2xl border border-emerald-400/30"
+                  className="mt-3 rounded-2xl border border-[color-mix(in_srgb,var(--rn-emerald)_28%,var(--rn-border))] bg-[var(--rn-emerald-soft)] p-4"
                 >
-                  <div className="text-[11px] text-emerald-300 uppercase tracking-widest">Incoming call</div>
-                  <div className="text-lg font-bold">{fakeCall.caller}</div>
-                  <div className="flex gap-2 mt-3">
-                    <button onClick={() => setFakeCall({ caller: "", on: false })} className="flex-1 py-2 rounded-xl bg-emerald-500/20 text-emerald-200 text-xs font-semibold">Answer</button>
-                    <button onClick={() => setFakeCall({ caller: "", on: false })} className="flex-1 py-2 rounded-xl bg-pink-500/20 text-pink-200 text-xs font-semibold">Decline</button>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--rn-emerald)]">
+                      Incoming call
+                    </span>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[var(--rn-emerald)]">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[var(--rn-emerald)] animate-pulse" aria-hidden="true" />
+                      Ringing
+                    </span>
+                  </div>
+                  <div className="mt-1 text-lg font-bold text-[var(--rn-ink)]">{fakeCall.caller}</div>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setFakeCall({ caller: "", on: false })}
+                      className="min-h-10 rounded-xl bg-[var(--rn-emerald)] text-xs font-bold text-white transition hover:opacity-90"
+                    >
+                      Answer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFakeCall({ caller: "", on: false })}
+                      className="min-h-10 rounded-xl border border-[var(--rn-accent)] bg-[var(--rn-surface)] text-xs font-bold text-[var(--rn-accent-strong)] transition hover:bg-[var(--rn-accent-soft)]"
+                    >
+                      Decline
+                    </button>
                   </div>
                 </motion.div>
               )}
