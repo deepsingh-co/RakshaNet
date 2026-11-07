@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
-import { Flame, Filter, MapPin } from "lucide-react";
+import { CheckCircle2, Flame, Filter, MapPin, ShieldAlert } from "lucide-react";
 import MapView from "../components/MapView";
-import { Pill } from "../components/ui";
+import { PageHeader, Pill, StatCard } from "../components/ui";
 import { useSafetyStore } from "../store/safetyStore";
 
 type Zone = { id: string; name: string; center: [number, number]; radius: number; level: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW"; reports: number; desc: string };
@@ -49,44 +49,60 @@ export default function Heatmap() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <div className="text-[11px] uppercase tracking-[0.3em] text-amber-300">Threat Heatmap</div>
-        <h1 className="text-3xl lg:text-4xl font-black mt-1">City-wide Safety Intelligence</h1>
-        <p className="text-slate-400 mt-1 text-sm">AI-fused heat map from crime data + {totalReports} community reports.</p>
-      </div>
+      <PageHeader
+        eyebrow="Threat heatmap"
+        title={<>City-wide <em>safety</em> intelligence</>}
+        description={`AI-fused heat map from crime data + ${totalReports} community reports.`}
+        actions={
+          <>
+            <Pill tone="emerald">
+              <span className="rn-dot" aria-hidden="true" /> Live dataset
+            </Pill>
+            <Pill tone="pink">
+              <ShieldAlert className="h-3 w-3" aria-hidden="true" /> {critical} critical
+            </Pill>
+          </>
+        }
+      />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="glass p-5 rounded-2xl">
-          <div className="text-[11px] uppercase text-slate-400">Total Reports</div>
-          <div className="text-3xl font-black tabular mt-1">{totalReports.toLocaleString()}</div>
-          <div className="text-[11px] text-emerald-300 mt-1">+12% this week</div>
-        </div>
-        <div className="glass p-5 rounded-2xl">
-          <div className="text-[11px] uppercase text-slate-400">Critical Zones</div>
-          <div className="text-3xl font-black tabular mt-1 text-pink-300">{critical}</div>
-          <div className="text-[11px] text-slate-400 mt-1">Active monitoring</div>
-        </div>
-        <div className="glass p-5 rounded-2xl">
-          <div className="text-[11px] uppercase text-slate-400">Verified Reports</div>
-          <div className="text-3xl font-black tabular mt-1 text-cyan-300">87%</div>
-          <div className="text-[11px] text-slate-400 mt-1">Cross-validated</div>
-        </div>
-        <div className="glass p-5 rounded-2xl">
-          <div className="text-[11px] uppercase text-slate-400">Cities Covered</div>
-          <div className="text-3xl font-black tabular mt-1 text-amber-300">14</div>
-          <div className="text-[11px] text-slate-400 mt-1">Pan-India network</div>
-        </div>
+      <div className="rn-kpi-grid">
+        <StatCard
+          label="Total reports"
+          value={totalReports.toLocaleString()}
+          hint="+12% this week"
+          icon={<Flame className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />}
+          tone="primary"
+        />
+        <StatCard
+          label="Critical zones"
+          value={critical}
+          hint="Active monitoring"
+          icon={<ShieldAlert className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />}
+          tone="rose"
+        />
+        <StatCard
+          label="Verified reports"
+          value="87%"
+          hint="Cross-validated"
+          icon={<CheckCircle2 className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />}
+          tone="emerald"
+        />
+        <StatCard
+          label="Cities covered"
+          value="14"
+          hint="Pan-India network"
+          icon={<MapPin className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />}
+          tone="amber"
+        />
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
-        <Filter className="w-4 h-4 text-slate-400" />
+        <Filter className="h-4 w-4 text-[var(--rn-ink-faint)]" aria-hidden="true" />
         {["ALL", "CRITICAL", "HIGH", "MEDIUM", "LOW"].map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
-            className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
-              filter === f ? "bg-white/10 border-white/20 text-white" : "border-white/10 text-slate-400 hover:text-white"
-            }`}
+            className={`rn-chip ${filter === f ? "is-active" : ""}`}
           >
             {f}
           </button>
@@ -94,7 +110,7 @@ export default function Heatmap() {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 glass-strong p-4 rounded-3xl">
+        <div className="rn-card lg:col-span-2 p-2">
           <MapView
             center={[currentLocation.lat, currentLocation.lng]}
             zoom={13}
