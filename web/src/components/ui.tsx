@@ -1,37 +1,92 @@
 import type { CSSProperties, ReactNode } from "react";
 
-export function StatCard({
-  label, value, hint, icon, tone = "cyan",
-}: { label: string; value: ReactNode; hint?: string; icon?: ReactNode; tone?: "pink" | "cyan" | "amber" | "emerald" | "violet" }) {
-  const tones: Record<string, string> = {
-    pink: "var(--aegis-primary)",
-    cyan: "var(--aegis-accent)",
-    amber: "var(--aegis-warning)",
-    emerald: "var(--aegis-secondary)",
-    violet: "var(--aegis-violet)",
-  };
-  const toneColor = tones[tone];
+/* ── Shared app primitives · Calm signal ─────────────────────────────
+   These read the .rn-shell design tokens so the shell, dashboard and
+   feature pages stay in one visual language: warm paper, evergreen,
+   rose accents and Fraunces display type. */
+
+export function PageHeader({
+  eyebrow,
+  title,
+  description,
+  actions,
+  tone = "primary",
+}: {
+  eyebrow: ReactNode;
+  title: ReactNode;
+  description?: ReactNode;
+  actions?: ReactNode;
+  tone?: "primary" | "rose" | "amber" | "violet" | "emerald";
+}) {
   return (
-    <div className="glass relative overflow-hidden p-5 rounded-2xl" style={{ color: toneColor, borderColor: `color-mix(in srgb, ${toneColor} 28%, transparent)`, background: `linear-gradient(135deg, color-mix(in srgb, ${toneColor} 14%, var(--aegis-card)), var(--aegis-card))` }}>
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="text-[11px] uppercase tracking-widest" style={{ color: "var(--aegis-text-secondary)" }}>{label}</div>
-          <div className="mt-1 text-3xl font-bold tabular" style={{ color: "var(--aegis-text-primary)" }}>{value}</div>
-          {hint && <div className="mt-1 text-[11px]" style={{ color: "var(--aegis-text-secondary)" }}>{hint}</div>}
-        </div>
-        {icon && <div className="opacity-80">{icon}</div>}
+    <header className={`rn-page-head is-${tone}`}>
+      <div>
+        <span className="rn-eyebrow">{eyebrow}</span>
+        <h1 className="rn-display rn-page-title">{title}</h1>
+        {description && <p className="rn-page-lede">{description}</p>}
       </div>
-      <div className="absolute -bottom-8 -right-8 w-32 h-32 rounded-full blur-2xl" style={{ background: `color-mix(in srgb, ${toneColor} 10%, transparent)` }} />
+      {actions && <div className="rn-page-actions">{actions}</div>}
+    </header>
+  );
+}
+
+export function StatCard({
+  label,
+  value,
+  hint,
+  icon,
+  tone = "primary",
+  meter,
+}: {
+  label: string;
+  value: ReactNode;
+  hint?: string;
+  icon?: ReactNode;
+  tone?: "pink" | "cyan" | "amber" | "emerald" | "violet" | "primary" | "rose";
+  meter?: number;
+}) {
+  const tones: Record<string, string> = {
+    pink: "var(--rn-accent)",
+    rose: "var(--rn-accent)",
+    cyan: "var(--rn-primary)",
+    primary: "var(--rn-primary)",
+    amber: "var(--rn-amber)",
+    emerald: "var(--rn-emerald)",
+    violet: "var(--rn-violet)",
+  };
+  const toneColor = tones[tone] || tones.primary;
+  return (
+    <div className="rn-kpi" style={{ "--tone": toneColor } as CSSProperties}>
+      <div className="rn-kpi-top">
+        <div>
+          <div className="rn-kpi-label">{label}</div>
+          <div className="rn-kpi-value">{value}</div>
+          {hint && <div className="rn-kpi-hint">{hint}</div>}
+        </div>
+        {icon && <span className="rn-kpi-icon">{icon}</span>}
+      </div>
+      {typeof meter === "number" && (
+        <div
+          className="rn-kpi-bar"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.max(0, Math.min(100, Math.round(meter)))}
+          aria-label={label}
+        >
+          <span style={{ width: `${Math.max(0, Math.min(100, meter))}%` }} />
+        </div>
+      )}
     </div>
   );
 }
 
 export function SectionHeader({ title, subtitle, action }: { title: string; subtitle?: string; action?: ReactNode }) {
   return (
-    <div className="flex items-end justify-between mb-4">
+    <div className="rn-panel-head" style={{ marginBottom: "1rem" }}>
       <div>
-        <h2 className="text-xl lg:text-2xl font-bold tracking-tight" style={{ color: "var(--aegis-text-primary)" }}>{title}</h2>
-        {subtitle && <p className="text-sm mt-1" style={{ color: "var(--aegis-text-secondary)" }}>{subtitle}</p>}
+        <h2 className="rn-panel-title" style={{ fontSize: "1.2rem" }}>{title}</h2>
+        {subtitle && <p className="rn-panel-sub">{subtitle}</p>}
       </div>
       {action}
     </div>
@@ -39,27 +94,21 @@ export function SectionHeader({ title, subtitle, action }: { title: string; subt
 }
 
 export function Card({ children, glow, className = "" }: { children: ReactNode; glow?: "pink" | "cyan" | "amber" | "emerald"; className?: string }) {
-  const glowMap: Record<string, string> = {
-    pink: "glow-pink",
-    cyan: "glow-cyan",
-    amber: "glow-amber",
-    emerald: "glow-cyan",
-  };
   return (
-    <div className={`glass-strong p-5 rounded-2xl ${glow ? glowMap[glow] : ""} ${className}`}>
+    <div className={`rn-card p-5 ${glow ? `glow-${glow}` : ""} ${className}`}>
       {children}
     </div>
   );
 }
 
 export function Pill({ children, tone = "slate" }: { children: ReactNode; tone?: "pink" | "cyan" | "amber" | "emerald" | "violet" | "slate" }) {
-  const tones: Record<string, CSSProperties> = {
-    pink: { color: "var(--aegis-primary)", background: "color-mix(in srgb, var(--aegis-primary) 12%, transparent)", borderColor: "color-mix(in srgb, var(--aegis-primary) 32%, transparent)" },
-    cyan: { color: "var(--aegis-accent)", background: "color-mix(in srgb, var(--aegis-accent) 12%, transparent)", borderColor: "color-mix(in srgb, var(--aegis-accent) 32%, transparent)" },
-    amber: { color: "var(--aegis-warning)", background: "color-mix(in srgb, var(--aegis-warning) 12%, transparent)", borderColor: "color-mix(in srgb, var(--aegis-warning) 32%, transparent)" },
-    emerald: { color: "var(--aegis-secondary)", background: "color-mix(in srgb, var(--aegis-secondary) 12%, transparent)", borderColor: "color-mix(in srgb, var(--aegis-secondary) 32%, transparent)" },
-    violet: { color: "var(--aegis-violet)", background: "color-mix(in srgb, var(--aegis-violet) 12%, transparent)", borderColor: "color-mix(in srgb, var(--aegis-violet) 32%, transparent)" },
-    slate: { color: "var(--aegis-text-secondary)", background: "var(--aegis-surface)", borderColor: "var(--aegis-border)" },
+  const toneMap: Record<string, string> = {
+    pink: "is-rose",
+    cyan: "is-emerald",
+    amber: "is-amber",
+    emerald: "is-emerald",
+    violet: "is-violet",
+    slate: "",
   };
-  return <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-1 rounded-full border" style={tones[tone]}>{children}</span>;
+  return <span className={`rn-pill ${toneMap[tone] || ""}`.trim()}>{children}</span>;
 }
