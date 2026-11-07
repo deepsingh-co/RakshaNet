@@ -1,5 +1,4 @@
 import { useId, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Activity,
@@ -111,7 +110,6 @@ export default function Register() {
   const navigate = useNavigate();
   const register = useAuthStore((s) => s.register);
   const loading = useAuthStore((s) => s.loading);
-  const reduceMotion = useReducedMotion();
 
   const [step, setStep] = useState<Step>("role");
   const [data, setData] = useState<FormData>(init);
@@ -227,15 +225,6 @@ export default function Register() {
     );
   };
 
-  const stepMotion = reduceMotion
-    ? {}
-    : {
-        initial: { opacity: 0, x: 18 },
-        animate: { opacity: 1, x: 0 },
-        exit: { opacity: 0, x: -18 },
-        transition: { duration: 0.24, ease: [0.22, 1, 0.36, 1] as const },
-      };
-
   const roleLabel = ROLES.find((role) => role.key === data.role)?.title ?? data.role;
 
   return (
@@ -342,8 +331,7 @@ export default function Register() {
               </div>
             </div>
 
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div key={step} {...stepMotion}>
+            <div key={step}>
                 {/* ═══ STEP 1 · ROLE ═══ */}
                 {step === "role" && (
                   <div>
@@ -710,10 +698,8 @@ export default function Register() {
 
                     <div className="grid gap-2.5">
                       {data.contacts.map((contact, index) => (
-                        <motion.div
+                        <div
                           key={index}
-                          initial={reduceMotion ? false : { opacity: 0, y: 8 }}
-                          animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
                           className="rounded-2xl border border-[var(--rn-border)] bg-[var(--rn-bg-soft)] p-3.5"
                         >
                           <div className="mb-2.5 flex items-center justify-between gap-2">
@@ -766,7 +752,7 @@ export default function Register() {
                           {errors[`contact_${index}`] && (
                             <p className="rn-error mt-2">⚠ {errors[`contact_${index}`]}</p>
                           )}
-                        </motion.div>
+                        </div>
                       ))}
                     </div>
 
@@ -882,8 +868,7 @@ export default function Register() {
                     </div>
                   </div>
                 )}
-              </motion.div>
-            </AnimatePresence>
+              </div>
 
             <div className="rn-reg-actions">
               <button type="button" onClick={back} disabled={step === "role"} className="rn-back">
