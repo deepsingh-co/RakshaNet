@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Eye, MapPin, Heart, Battery, Route, Bell, Phone } from "lucide-react";
 import { useSafetyStore } from "../store/safetyStore";
 import MapView from "../components/MapView";
-import { Pill } from "../components/ui";
+import { PageHeader, Pill } from "../components/ui";
 import { useAuthStore } from "../store/authStore";
 import { journeyApi } from "../api/journeyApi";
 
@@ -47,11 +47,16 @@ export default function GuardianPortal() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <div className="text-[11px] uppercase tracking-[0.3em] text-emerald-300">Guardian Portal</div>
-        <h1 className="text-3xl lg:text-4xl font-black mt-1">Watch over the people you love</h1>
-        <p className="text-slate-400 mt-1 text-sm">3 wards currently sharing live location with you.</p>
-      </div>
+      <PageHeader
+        eyebrow="Guardian portal"
+        title={<>Watch over the people you <em>love</em></>}
+        description="3 wards currently sharing live location with you."
+        actions={
+          <span className="rn-pill is-emerald">
+            <span className="rn-dot" aria-hidden="true" /> Guardian link encrypted
+          </span>
+        }
+      />
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 glass-strong p-4 rounded-3xl">
@@ -123,7 +128,7 @@ export default function GuardianPortal() {
                   <div className="w-11 h-11 rounded-full bg-gradient-to-br from-pink-500 to-cyan-400 grid place-items-center text-xs font-bold">
                     {w.name.split(" ").map((s) => s[0]).join("").slice(0, 2)}
                   </div>
-                  <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[#05060f] ${
+                  <span className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-[var(--rn-surface)] ${
                     w.status.includes("Elevated") ? "bg-amber-400 blink" : "bg-emerald-400"
                   }`} />
                 </div>
@@ -156,7 +161,7 @@ export default function GuardianPortal() {
               <div className="mt-3 grid grid-cols-3 gap-1.5">
                 <button className="text-[11px] py-2 glass-chip hover:bg-white/10 flex items-center justify-center gap-1"><MapPin className="w-3 h-3" /> Track</button>
                 <button className="text-[11px] py-2 glass-chip hover:bg-white/10 flex items-center justify-center gap-1"><Phone className="w-3 h-3" /> Call</button>
-                <button className="text-[11px] py-2 bg-pink-500/20 text-pink-200 rounded-full flex items-center justify-center gap-1"><Bell className="w-3 h-3" /> Alert</button>
+                <button className="text-[11px] py-2 rounded-full border border-[var(--rn-accent)]/25 bg-[var(--rn-accent-soft)] text-[var(--rn-accent-strong)] flex items-center justify-center gap-1"><Bell className="w-3 h-3" /> Alert</button>
               </div>
             </motion.div>
           ))}

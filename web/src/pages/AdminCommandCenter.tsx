@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import {
   Command, Siren, Users, MapPin, ShieldCheck, Activity, Flame, Radio,
   PhoneCall, MessageSquare, Video, ChevronRight,
@@ -10,7 +9,7 @@ import {
   PieChart, Pie, Cell, AreaChart, Area,
 } from "recharts";
 import MapView from "../components/MapView";
-import { Pill } from "../components/ui";
+import { PageHeader, Pill, StatCard } from "../components/ui";
 
 const hourData = Array.from({ length: 24 }, (_, i) => ({
   h: `${i}:00`, sos: Math.round(2 + Math.random() * 14 + (i >= 18 && i <= 23 ? 12 : 0)),
@@ -22,11 +21,11 @@ const weekData = ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map((d) => ({
 }));
 
 const typeData = [
-  { name: "Harassment", value: 38, color: "#ff3d7f" },
-  { name: "Stalking", value: 22, color: "#ff8a3d" },
-  { name: "Poor lighting", value: 18, color: "#ffb020" },
-  { name: "Suspicious", value: 14, color: "#38e8ff" },
-  { name: "Other", value: 8, color: "#a78bfa" },
+  { name: "Harassment", value: 38, color: "#c23e56" },
+  { name: "Stalking", value: 22, color: "#b4741a" },
+  { name: "Poor lighting", value: 18, color: "#c58a25" },
+  { name: "Suspicious", value: 14, color: "#0b6b5d" },
+  { name: "Other", value: 8, color: "#6d5a8a" },
 ];
 
 const cityData = [
@@ -51,35 +50,27 @@ export default function AdminCommandCenter() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <div className="text-[11px] uppercase tracking-[0.3em] text-pink-300">Admin Command Center</div>
-          <h1 className="text-3xl lg:text-4xl font-black mt-1">City-wide Safety Operations</h1>
-          <p className="text-slate-400 mt-1 text-sm">Real-time visibility across 14 cities • Police & admin dispatch</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Pill tone="pink"><span className="w-1.5 h-1.5 rounded-full bg-pink-400 blink" /> {totalActive} ACTIVE SOS</Pill>
-          <Pill tone="emerald"><ShieldCheck className="w-3 h-3" /> {resolvedToday} RESOLVED TODAY</Pill>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Admin command center"
+        title={<>City-wide <em>safety</em> operations</>}
+        description="Real-time visibility across 14 cities • Police & admin dispatch"
+        actions={
+          <>
+            <Pill tone="pink">
+              <span className="rn-dot" aria-hidden="true" /> {totalActive} active SOS
+            </Pill>
+            <Pill tone="emerald">
+              <ShieldCheck className="w-3 h-3" aria-hidden="true" /> {resolvedToday} resolved today
+            </Pill>
+          </>
+        }
+      />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { l: "Active SOS", v: totalActive, h: "+12% vs yesterday", t: "pink", i: Siren },
-          { l: "Avg Response", v: "2.4 min", h: "Target < 3 min", t: "cyan", i: Activity },
-          { l: "Guardians Online", v: "2,417", h: "Live watchers", t: "violet", i: Users },
-          { l: "AI Predictions/s", v: "14.2k", h: "FastAPI cluster", t: "amber", i: Radio },
-        ].map((s, i) => (
-          <motion.div key={s.l} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
-            className="glass p-5 rounded-2xl">
-            <div className="flex items-center justify-between">
-              <div className="text-[11px] uppercase text-slate-400">{s.l}</div>
-              <s.i className={`w-4 h-4 ${s.t === "pink" ? "text-pink-300" : s.t === "cyan" ? "text-cyan-300" : s.t === "violet" ? "text-violet-300" : "text-amber-300"}`} />
-            </div>
-            <div className="text-3xl font-black tabular mt-2">{s.v}</div>
-            <div className="text-[11px] text-slate-400 mt-1">{s.h}</div>
-          </motion.div>
-        ))}
+      <div className="rn-kpi-grid">
+        <StatCard label="Active SOS" value={totalActive} hint="+12% vs yesterday" icon={<Siren className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />} tone="rose" meter={Math.min(100, totalActive * 3)} />
+        <StatCard label="Avg response" value={<>2.4 <small>min</small></>} hint="Target under 3 min" icon={<Activity className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />} tone="primary" />
+        <StatCard label="Guardians online" value="2,417" hint="Live watchers" icon={<Users className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />} tone="violet" />
+        <StatCard label="AI predictions/s" value="14.2k" hint="FastAPI cluster" icon={<Radio className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />} tone="amber" />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -103,9 +94,9 @@ export default function AdminCommandCenter() {
               meta: a.trigger,
             }))}
             dangerZones={[
-              { center: [28.6203, 77.2107], radius: 380, color: "#ff3d7f", label: "SOS-4821 • Paharganj" },
-              { center: [28.6352, 77.2249], radius: 280, color: "#ff8a3d", label: "SOS-4819 • Kashmere Gate" },
-              { center: [28.5921, 77.2281], radius: 240, color: "#ffb020", label: "SOS-4815 • Saket" },
+              { center: [28.6203, 77.2107], radius: 380, color: "#c23e56", label: "SOS-4821 • Paharganj" },
+              { center: [28.6352, 77.2249], radius: 280, color: "#b4741a", label: "SOS-4819 • Kashmere Gate" },
+              { center: [28.5921, 77.2281], radius: 240, color: "#c58a25", label: "SOS-4815 • Saket" },
             ]}
           />
         </div>
@@ -145,15 +136,15 @@ export default function AdminCommandCenter() {
               <AreaChart data={hourData}>
                 <defs>
                   <linearGradient id="gH" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#ff3d7f" stopOpacity={0.6} />
-                    <stop offset="100%" stopColor="#ff3d7f" stopOpacity={0} />
+                    <stop offset="0%" stopColor="#c23e56" stopOpacity={0.28} />
+                    <stop offset="100%" stopColor="#c23e56" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                <XAxis dataKey="h" stroke="#5b607a" fontSize={10} interval={3} />
-                <YAxis stroke="#5b607a" fontSize={10} />
-                <Tooltip contentStyle={{ background: "rgba(10,13,31,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, fontSize: 12 }} />
-                <Area type="monotone" dataKey="sos" stroke="#ff3d7f" strokeWidth={2} fill="url(#gH)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(20,34,31,0.1)" />
+                <XAxis dataKey="h" stroke="#5c6864" fontSize={10} interval={3} />
+                <YAxis stroke="#5c6864" fontSize={10} />
+                <Tooltip contentStyle={{ background: "#fffdf8", border: "1px solid #e5ded1", borderRadius: 12, fontSize: 12, color: "#14221f" }} />
+                <Area type="monotone" dataKey="sos" stroke="#c23e56" strokeWidth={2} fill="url(#gH)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -165,12 +156,12 @@ export default function AdminCommandCenter() {
           <div className="h-56 mt-3">
             <ResponsiveContainer>
               <BarChart data={weekData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                <XAxis dataKey="d" stroke="#5b607a" fontSize={11} />
-                <YAxis stroke="#5b607a" fontSize={11} />
-                <Tooltip contentStyle={{ background: "rgba(10,13,31,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, fontSize: 12 }} />
-                <Bar dataKey="resolved" fill="#2ee6a6" radius={[6, 6, 0, 0]} />
-                <Bar dataKey="escalated" fill="#ff3d7f" radius={[6, 6, 0, 0]} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(20,34,31,0.1)" />
+                <XAxis dataKey="d" stroke="#5c6864" fontSize={11} />
+                <YAxis stroke="#5c6864" fontSize={11} />
+                <Tooltip contentStyle={{ background: "#fffdf8", border: "1px solid #e5ded1", borderRadius: 12, fontSize: 12, color: "#14221f" }} />
+                <Bar dataKey="resolved" fill="#1c7a58" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="escalated" fill="#c23e56" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -185,7 +176,7 @@ export default function AdminCommandCenter() {
                 <Pie data={typeData} dataKey="value" innerRadius={50} outerRadius={85} paddingAngle={3}>
                   {typeData.map((e) => <Cell key={e.name} fill={e.color} />)}
                 </Pie>
-                <Tooltip contentStyle={{ background: "rgba(10,13,31,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, fontSize: 12 }} />
+                <Tooltip contentStyle={{ background: "#fffdf8", border: "1px solid #e5ded1", borderRadius: 12, fontSize: 12, color: "#14221f" }} />
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 grid place-items-center pointer-events-none">
@@ -219,12 +210,12 @@ export default function AdminCommandCenter() {
           <div className="mt-4 h-64">
             <ResponsiveContainer>
               <LineChart data={cityData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                <XAxis dataKey="c" stroke="#5b607a" fontSize={11} />
-                <YAxis stroke="#5b607a" fontSize={11} />
-                <Tooltip contentStyle={{ background: "rgba(10,13,31,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, fontSize: 12 }} />
-                <Line type="monotone" dataKey="active" stroke="#ff3d7f" strokeWidth={2.5} dot={{ fill: "#ff3d7f", r: 4 }} />
-                <Line type="monotone" dataKey="resolved" stroke="#38e8ff" strokeWidth={2} dot={{ fill: "#38e8ff", r: 4 }} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(20,34,31,0.1)" />
+                <XAxis dataKey="c" stroke="#5c6864" fontSize={11} />
+                <YAxis stroke="#5c6864" fontSize={11} />
+                <Tooltip contentStyle={{ background: "#fffdf8", border: "1px solid #e5ded1", borderRadius: 12, fontSize: 12, color: "#14221f" }} />
+                <Line type="monotone" dataKey="active" stroke="#c23e56" strokeWidth={2.5} dot={{ fill: "#c23e56", r: 4 }} />
+                <Line type="monotone" dataKey="resolved" stroke="#0b6b5d" strokeWidth={2} dot={{ fill: "#0b6b5d", r: 4 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -249,7 +240,7 @@ export default function AdminCommandCenter() {
                   <button onClick={() => resolveSOS(a.id)} className="text-[10px] py-2 glass-chip hover:bg-white/10 flex items-center justify-center gap-1"><ShieldCheck className="w-3 h-3" /> Resolve</button>
                   <button className="text-[10px] py-2 glass-chip hover:bg-white/10 flex items-center justify-center gap-1"><PhoneCall className="w-3 h-3" /> Call</button>
                   <button className="text-[10px] py-2 glass-chip hover:bg-white/10 flex items-center justify-center gap-1"><MessageSquare className="w-3 h-3" /> SMS</button>
-                  <button className="text-[10px] py-2 bg-pink-500/20 text-pink-200 rounded-full flex items-center justify-center gap-1"><Video className="w-3 h-3" /> CCTV</button>
+                  <button className="text-[10px] py-2 rounded-full border border-[var(--rn-accent)]/25 bg-[var(--rn-accent-soft)] text-[var(--rn-accent-strong)] flex items-center justify-center gap-1"><Video className="w-3 h-3" /> CCTV</button>
                 </div>
               </div>
             ))}
