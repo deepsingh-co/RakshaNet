@@ -43,10 +43,11 @@ export function IncidentMap({
       minZoom: 3,
     }).setView([22.5937, 78.9629], 4.6);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19,
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      maxZoom: 20,
+      subdomains: 'abcd',
       attribution:
-        '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors',
+        '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions" target="_blank" rel="noreferrer">CARTO</a>',
     }).addTo(map);
 
     layerRef.current = L.layerGroup().addTo(map);
@@ -91,10 +92,10 @@ export function IncidentMap({
       if (accuracyMeters && accuracyMeters > 0) {
         L.circle([lat, lng], {
           radius: Math.min(accuracyMeters, 1000),
-          color: '#2d6cdf',
+          color: '#5aa9ff',
           weight: 1,
-          fillColor: '#2d6cdf',
-          fillOpacity: 0.08,
+          fillColor: '#5aa9ff',
+          fillOpacity: 0.1,
           interactive: false,
         }).addTo(layer);
       }

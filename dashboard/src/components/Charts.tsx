@@ -2,14 +2,14 @@ import { formatDay, percent, titleCase } from '../lib/format';
 import type { Tone } from './ui';
 
 const TONE_COLORS: Record<string, string> = {
-  slate: '#94a3b8',
-  blue: '#2d6cdf',
-  teal: '#1f8a8a',
-  green: '#2f9e6f',
-  orange: '#e07a35',
-  amber: '#d9a129',
-  red: '#d64545',
-  purple: '#7c5cd6',
+  slate: '#8ea3bb',
+  blue: '#5aa9ff',
+  teal: '#2dd4bf',
+  green: '#3ddc97',
+  orange: '#ff9f5a',
+  amber: '#f7c948',
+  red: '#ff6b6b',
+  purple: '#b197fc',
 };
 
 export function toneColor(tone?: string): string {
@@ -136,7 +136,15 @@ export function DonutChart({
   return (
     <div className="donut-wrap">
       <svg viewBox="0 0 160 160" className="donut" role="img" aria-label="Status distribution">
-        <circle cx="80" cy="80" r={radius} fill="none" stroke="#eef2f7" strokeWidth="18" />
+        <circle
+          cx="80"
+          cy="80"
+          r={radius}
+          fill="none"
+          stroke="#1c2c3f"
+          strokeWidth="18"
+          className="donut-track"
+        />
         {data.map((item) => {
           const fraction = item.value / total;
           const dash = fraction * circumference;
