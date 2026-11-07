@@ -1,16 +1,16 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Shield, LayoutDashboard, Siren, MapPinned, Flame, Users, Bot, Eye, Command,
-  LogOut, Bell, Search, Zap, Activity, Menu, X, Radio, Sparkles,
+  LogOut, Bell, Search, Activity, Menu, X, Radio, Sparkles,
   UserCheck, Heart, History, Settings, FileText, BarChart3, Server, UserCog,
   ShieldAlert, ClipboardList, AlertTriangle, CheckCircle2, ShieldCheck, Mic,
+  ChevronRight,
 } from "lucide-react";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useAuthStore } from "../store/authStore";
 import { useSafetyStore } from "../store/safetyStore";
 import { sosApi } from "../api/endpoints";
-import ThemeSwitcher from "../theme/ThemeSwitcher";
 import { DemoCallOverlay } from "./DemoCallOverlay";
 import { IntegratedVoiceGuard } from "./IntegratedVoiceGuard";
 import { checkDistressKeywords, executeVoiceDistressDispatch } from "../services/voiceDistressService";
@@ -417,10 +417,20 @@ function GlobalBeaconWatcher() {
 export default function Layout() {
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
   const { riskLevel, notifications, sosActive } = useSafetyStore();
   const [open, setOpen] = useState(false);
   const [time, setTime] = useState(new Date());
   const [voiceGuardOpen, setVoiceGuardOpen] = useState(false);
+
+  const currentLabel =
+    [...userNav, ...guardianNav, ...adminNav]
+      .sort((a, b) => b.to.length - a.to.length)
+      .find(
+        (n) =>
+          location.pathname === n.to ||
+          location.pathname.startsWith(`${n.to}/`)
+      )?.label ?? "Command Deck";
 
   // Global Background Voice Distress Listener for "Mera koi picha kr raha hai"
   useEffect(() => {
@@ -478,6 +488,23 @@ export default function Layout() {
     return () => clearInterval(t);
   }, []);
 
+  // Drawer chrome: Escape closes it and the page behind stops scrolling.
+  useEffect(() => {
+    if (!voiceGuardOpen) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setVoiceGuardOpen(false);
+    };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [voiceGuardOpen]);
+
   const riskTone = {
     LOW: "is-emerald",
     MEDIUM: "is-amber",
@@ -487,6 +514,11 @@ export default function Layout() {
 
   return (
     <div className="rn-page rn-shell">
+      {/* Landing-style ambient field */}
+      <div className="rn-backdrop" aria-hidden="true">
+        <div className="rn-grid" />
+      </div>
+
       {/* Global cross-user Bystander / SOS wake alert — fires on ANY page */}
       <GlobalBeaconWatcher />
 
@@ -494,7 +526,7 @@ export default function Layout() {
         {/* Mobile overlay — renders BEFORE sidebar so sidebar's z-40 sits on top */}
         <div
           className={`lg:hidden fixed inset-0 z-30 transition-opacity duration-300 ${open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"}`}
-          style={{ background: "rgba(16,43,39,0.45)" }}
+          style={{ background: "rgba(2,5,11,0.72)", backdropFilter: "blur(6px)" }}
           onClick={() => setOpen(false)}
           aria-hidden="true"
         />
@@ -515,8 +547,19 @@ export default function Layout() {
               </span>
               <span>
                 <span className="rn-brand-name block">RakshaNet</span>
-                <span className="rn-brand-sub block">Safety intelligence</span>
+                <span className="rn-brand-sub block">Offline-first safety</span>
               </span>
+              <div className="ml-auto lg:hidden">
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  className="rn-icon-btn"
+                  style={{ width: 36, height: 36 }}
+                  aria-label="Close navigation"
+                >
+                  <X className="h-4 w-4" aria-hidden="true" />
+                </button>
+              </div>
             </div>
 
             {/* Role indicator badge */}
@@ -542,6 +585,11 @@ export default function Layout() {
                   <Shield className="h-3.5 w-3.5" aria-hidden="true" /> User panel
                 </>
               )}
+            </div>
+
+            <div className="rn-nav-label">
+              <span className="rn-nav-label-line" aria-hidden="true" />
+              Command modules
             </div>
 
             <nav className="rn-nav" aria-label="Main navigation">
@@ -606,6 +654,11 @@ export default function Layout() {
               >
                 <LogOut className="h-4 w-4" aria-hidden="true" /> Sign out
               </button>
+
+              <div className="rn-sidebar-build">
+                <span className="rn-sidebar-build-dot" aria-hidden="true" />
+                RN OPS · v2.4 · Delhi NCR
+              </div>
             </div>
           </div>
         </aside>
@@ -615,17 +668,26 @@ export default function Layout() {
           {/* Topbar */}
           <header className="rn-topbar">
             <div className="flex items-center gap-3 px-4 py-3 lg:px-8">
-              <button
-                className="rn-icon-btn lg:hidden"
-                onClick={() => setOpen(!open)}
-                aria-label={open ? "Close navigation" : "Open navigation"}
-                aria-expanded={open}
-              >
-                {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-              </button>
+              <div className="lg:hidden">
+                <button
+                  className="rn-icon-btn"
+                  onClick={() => setOpen(!open)}
+                  aria-label={open ? "Close navigation" : "Open navigation"}
+                  aria-expanded={open}
+                >
+                  {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                </button>
+              </div>
+
+              <div className="rn-breadcrumb hidden 2xl:flex">
+                <ShieldCheck className="h-3.5 w-3.5 text-[var(--rn-primary)]" aria-hidden="true" />
+                <span className="rn-breadcrumb-root">RakshaNet</span>
+                <ChevronRight className="h-3 w-3 opacity-50" aria-hidden="true" />
+                <span className="rn-breadcrumb-current">{currentLabel}</span>
+              </div>
 
               <div className="hidden md:block">
-                <div className="rn-search w-[320px]">
+                <div className="rn-search w-[260px] xl:w-[320px]">
                   <Search className="h-4 w-4" aria-hidden="true" />
                   <input
                     placeholder="Search areas, users, incidents…"
@@ -643,9 +705,9 @@ export default function Layout() {
                 </span>
               </div>
 
-              <div className="hidden md:block">
-                <span className="rn-pill">
-                  <Zap className="h-3.5 w-3.5 text-[var(--rn-amber)]" aria-hidden="true" />
+              <div className="hidden xl:block">
+                <span className="rn-clock">
+                  <span className="rn-clock-dot" aria-hidden="true" />
                   {time.toLocaleTimeString([], {
                     hour: "2-digit",
                     minute: "2-digit",
@@ -669,8 +731,6 @@ export default function Layout() {
                 </span>
               </button>
 
-              <ThemeSwitcher variant="compact" />
-
               <button className="rn-icon-btn relative" aria-label="Notifications">
                 <Bell className="h-4 w-4" aria-hidden="true" />
                 {sosActive && (
@@ -678,18 +738,14 @@ export default function Layout() {
                 )}
               </button>
 
-              <div className="flex items-center gap-2 border-l border-[var(--rn-border)] pl-2">
-                <div
-                  className="grid h-9 w-9 place-items-center rounded-full text-xs font-bold text-white"
-                  style={{ background: "linear-gradient(135deg, #0b6b5d, #17967f)" }}
-                  aria-hidden="true"
-                >
+              <div className="rn-user-chip">
+                <div className="rn-avatar" aria-hidden="true">
                   {user?.name.split(" ").map((s) => s[0]).join("").slice(0, 2)}
                 </div>
-                <div className="hidden leading-tight md:block">
-                  <div className="text-sm font-semibold text-[var(--rn-ink)]">{user?.name}</div>
-                  <div className="text-[10px] uppercase tracking-wide text-[var(--rn-ink-faint)]">
-                    {user?.role}
+                <div className="hidden leading-tight xl:block">
+                  <div className="rn-user-name">{user?.name}</div>
+                  <div className="rn-user-role">
+                    {user?.role} <span className="rn-user-sep">/</span> online
                   </div>
                 </div>
               </div>
@@ -753,7 +809,7 @@ export default function Layout() {
         </AnimatePresence>
       </div>
 
-      {/* Slide-over Right Drawer for Voice Guard & Trigger Words */}
+      {/* Slide-over right drawer — Voice Guard & trigger phrases */}
       <AnimatePresence>
         {voiceGuardOpen && (
           <>
@@ -762,34 +818,23 @@ export default function Layout() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setVoiceGuardOpen(false)}
-              className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+              className="rn-drawer-scrim"
+              aria-hidden="true"
             />
             <motion.div
+              role="dialog"
+              aria-modal="true"
+              aria-label="Voice guard and trigger phrases"
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
-              transition={{ type: "spring", damping: 26, stiffness: 220 }}
-              className="fixed top-0 right-0 bottom-0 z-50 w-full max-w-lg bg-slate-950/95 backdrop-blur-2xl border-l border-pink-500/20 shadow-2xl p-6 overflow-y-auto flex flex-col"
+              transition={{ type: "spring", damping: 28, stiffness: 260 }}
+              className="rn-voice-drawer"
             >
-              <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-pink-500/20 border border-pink-400/30 text-pink-300 grid place-items-center">
-                    <Mic className="w-4 h-4 text-pink-400 animate-pulse" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-white text-sm">Voice Distress Guard</h3>
-                    <p className="text-[11px] text-slate-400">Zero-Click AI Detection &amp; Custom Trigger Words</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setVoiceGuardOpen(false)}
-                  className="p-2 rounded-xl hover:bg-white/10 text-slate-400 hover:text-white transition cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              <IntegratedVoiceGuard variant="compact" />
+              <IntegratedVoiceGuard
+                variant="compact"
+                onClose={() => setVoiceGuardOpen(false)}
+              />
             </motion.div>
           </>
         )}
