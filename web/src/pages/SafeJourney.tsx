@@ -9,6 +9,7 @@ import {
 import { useJourneyStore } from "../store/journeyStore";
 import { useSafetyStore } from "../store/safetyStore";
 import MapView from "../components/MapView";
+import { PageHeader } from "../components/ui";
 
 // ── Helpers ──────────────────────────────────────────────────────────
 function formatTime(isoStr: string | null | undefined) {
@@ -209,15 +210,16 @@ function StartJourneyForm({ myPos }: { myPos: [number, number] | null }) {
       className="space-y-6"
     >
       {/* Header */}
-      <div>
-        <div className="text-[11px] uppercase tracking-[0.3em] text-cyan-300">Safe Journey Guardian</div>
-        <h1 className="text-3xl lg:text-4xl font-black mt-1 bg-gradient-to-r from-cyan-300 to-blue-400 bg-clip-text text-transparent">
-          Start a Protected Journey
-        </h1>
-        <p className="text-slate-400 mt-1 text-sm">
-          RakshaNet will monitor your route, send heartbeats, and alert guardians if you miss checkpoints or go dark.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Safe journey guardian"
+        title={<>Start a <em>protected</em> journey</>}
+        description="RakshaNet will monitor your route, send heartbeats, and alert guardians if you miss checkpoints or go dark."
+        actions={
+          <span className="rn-pill is-emerald">
+            <span className="rn-dot" aria-hidden="true" /> Live monitoring ready
+          </span>
+        }
+      />
 
       <div className="grid lg:grid-cols-5 gap-6">
         {/* Form */}
@@ -262,7 +264,7 @@ function StartJourneyForm({ myPos }: { myPos: [number, number] | null }) {
                   type="button"
                   onClick={handleSearch}
                   disabled={isSearching || !destSearch}
-                  className="px-4 bg-cyan-600/30 border border-cyan-500/30 hover:bg-cyan-600/50 rounded-xl text-xs font-bold text-cyan-300 transition"
+                  className="rn-btn rn-btn-ghost rn-btn-sm px-4"
                 >
                   {isSearching ? "..." : "Search"}
                 </button>
