@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Flag, ShieldCheck, ThumbsUp, MapPin, Plus, AlertTriangle, Eye, Moon, Users } from "lucide-react";
 import { useSafetyStore, type CommunityReport } from "../store/safetyStore";
-import { Pill } from "../components/ui";
+import { PageHeader, Pill, StatCard } from "../components/ui";
 
 const types = ["Harassment", "Stalking", "Poor Lighting", "Suspicious", "Crowd"] as const;
 
@@ -27,41 +27,46 @@ export default function CommunityReports() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <div className="text-[11px] uppercase tracking-[0.3em] text-violet-300">Community Intelligence</div>
-          <h1 className="text-3xl lg:text-4xl font-black mt-1">Citizen-powered Safety Network</h1>
-          <p className="text-slate-400 mt-1 text-sm">Anonymous verified reports — making cities safer, together.</p>
-        </div>
-        <button
-          onClick={() => setOpen(true)}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-rose-600 font-semibold text-sm glow-pink hover:brightness-110"
-        >
-          <Plus className="w-4 h-4" /> File a report
-        </button>
-      </div>
+      <PageHeader
+        eyebrow="Community intelligence"
+        title={<>Citizen-powered <em>safety</em> network</>}
+        description="Anonymous verified reports — making cities safer, together."
+        actions={
+          <button onClick={() => setOpen(true)} className="rn-btn rn-btn-accent rn-btn-sm">
+            <Plus className="h-4 w-4" aria-hidden="true" /> File a report
+          </button>
+        }
+      />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="glass p-5 rounded-2xl">
-          <Flag className="w-5 h-5 text-pink-300" />
-          <div className="text-3xl font-black tabular mt-2">{communityReports.length}</div>
-          <div className="text-xs text-slate-400">Total reports</div>
-        </div>
-        <div className="glass p-5 rounded-2xl">
-          <ShieldCheck className="w-5 h-5 text-emerald-300" />
-          <div className="text-3xl font-black tabular mt-2">{verified}</div>
-          <div className="text-xs text-slate-400">Verified</div>
-        </div>
-        <div className="glass p-5 rounded-2xl">
-          <Users className="w-5 h-5 text-cyan-300" />
-          <div className="text-3xl font-black tabular mt-2">12.4k</div>
-          <div className="text-xs text-slate-400">Active contributors</div>
-        </div>
-        <div className="glass p-5 rounded-2xl">
-          <Eye className="w-5 h-5 text-amber-300" />
-          <div className="text-3xl font-black tabular mt-2">87%</div>
-          <div className="text-xs text-slate-400">Verification rate</div>
-        </div>
+      <div className="rn-kpi-grid">
+        <StatCard
+          label="Total reports"
+          value={communityReports.length}
+          hint="Across your city"
+          icon={<Flag className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />}
+          tone="rose"
+        />
+        <StatCard
+          label="Verified"
+          value={verified}
+          hint="Peer + AI confirmed"
+          icon={<ShieldCheck className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />}
+          tone="emerald"
+        />
+        <StatCard
+          label="Active contributors"
+          value="12.4k"
+          hint="Community watch"
+          icon={<Users className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />}
+          tone="primary"
+        />
+        <StatCard
+          label="Verification rate"
+          value="87%"
+          hint="Cross-validated"
+          icon={<Eye className="h-4 w-4" strokeWidth={1.8} aria-hidden="true" />}
+          tone="amber"
+        />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -70,7 +75,7 @@ export default function CommunityReports() {
             <motion.div
               key={r.id}
               initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-              className="glass p-5 rounded-2xl flex items-start gap-4"
+              className="rn-card p-5 flex items-start gap-4"
             >
               <div className={`w-11 h-11 rounded-xl grid place-items-center ${
                 r.severity >= 4 ? "bg-pink-500/20 text-pink-300" : r.severity === 3 ? "bg-amber-500/20 text-amber-300" : "bg-cyan-500/20 text-cyan-300"
@@ -99,7 +104,7 @@ export default function CommunityReports() {
           ))}
         </div>
 
-        <div className="glass-strong p-6 rounded-3xl">
+        <div className="rn-card p-6">
           <div className="font-bold">Report Integrity</div>
           <p className="text-xs text-slate-400 mt-1">All reports are cross-validated using AI, geolocation patterns, and peer confirmation.</p>
           <div className="mt-4 space-y-3">
