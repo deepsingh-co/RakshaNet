@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Bot, Send, ShieldCheck, MapPin, Phone, Heart, Sparkles, Siren, Navigation, Mic, MicOff } from "lucide-react";
 import { useSafetyStore } from "../store/safetyStore";
 import { useAuthStore } from "../store/authStore";
+import { PageHeader } from "../components/ui";
 import { checkDistressKeywords, executeVoiceDistressDispatch, stopEmergencySiren } from "../services/voiceDistressService";
 
 type Msg = {
@@ -348,14 +349,30 @@ export default function AICopilot() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <div className="text-[11px] uppercase tracking-[0.3em] text-cyan-300">AI Safety Copilot</div>
-        <h1 className="text-3xl lg:text-4xl font-black mt-1">Your 24/7 AI Safety Companion</h1>
-        <p className="text-slate-400 mt-1 text-sm flex items-center gap-2">
-          <span className={`w-2 h-2 rounded-full inline-block ${gps ? "bg-emerald-400 blink" : gpsReady ? "bg-amber-400" : "bg-slate-500"}`} />
-          {gps ? `GPS Active — ${gps.lat.toFixed(5)}, ${gps.lng.toFixed(5)}` : gpsReady ? "GPS unavailable — enable location for real data" : "Acquiring GPS…"}
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="AI safety copilot"
+        title={<>Your 24/7 <em>AI safety</em> companion</>}
+        description={
+          <span className="flex items-center gap-2">
+            <span
+              className={`h-2 w-2 rounded-full ${
+                gps ? "bg-[var(--rn-emerald)]" : gpsReady ? "bg-[var(--rn-amber)]" : "bg-[var(--rn-ink-faint)]"
+              }`}
+              aria-hidden="true"
+            />
+            {gps
+              ? `GPS active — ${gps.lat.toFixed(5)}, ${gps.lng.toFixed(5)}`
+              : gpsReady
+                ? "GPS unavailable — enable location for real data"
+                : "Acquiring GPS…"}
+          </span>
+        }
+        actions={
+          <span className="rn-pill is-emerald">
+            <span className="rn-dot" aria-hidden="true" /> Context-aware
+          </span>
+        }
+      />
 
       <div className="grid lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 glass-strong p-6 rounded-3xl flex flex-col h-[640px]">
