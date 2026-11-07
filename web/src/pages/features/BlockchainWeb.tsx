@@ -20,7 +20,10 @@ export default function BlockchainWeb() {
   const loadChain = async () => {
     try {
       const data = await blockchainApi.getChain();
-      setChain(data);
+      // Dev servers without an API proxy may return the SPA shell (HTML
+      // string) or a wrapper object. Keep the page on its empty state
+      // instead of crashing on a non-array response.
+      setChain(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to load blockchain", err);
     }

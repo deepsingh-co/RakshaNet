@@ -1,10 +1,10 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  Sparkles, Shield, Cpu, Fingerprint, Radio, Users, HandHeart,
+  Shield, Cpu, Fingerprint, Radio, Users, HandHeart,
   Watch, Footprints, Heart, Brain, Zap, Mic,
 } from "lucide-react";
-import { Pill } from "../../components/ui";
+import { PageHeader, Pill } from "../../components/ui";
 
 const FEATURES = [
   /*
@@ -143,24 +143,25 @@ const FEATURES = [
   },
 ];
 
+/* Landing "Calm signal" tones — rose, evergreen, amber. */
 const toneColors: Record<string, { grad: string; bg: string; text: string; border: string }> = {
   pink: {
-    grad: "from-pink-500 to-rose-600",
-    bg: "bg-pink-500/10",
-    text: "text-pink-300",
-    border: "border-pink-400/30",
+    grad: "from-[#c23e56] to-[#a62f46]",
+    bg: "bg-[#f8e7ea]",
+    text: "text-[#a62f46]",
+    border: "border-[#c23e56]/25",
   },
   cyan: {
-    grad: "from-cyan-500 to-blue-600",
-    bg: "bg-cyan-500/10",
-    text: "text-cyan-300",
-    border: "border-cyan-400/30",
+    grad: "from-[#0f7f6e] to-[#085247]",
+    bg: "bg-[#e3f1ed]",
+    text: "text-[#085247]",
+    border: "border-[#0b6b5d]/25",
   },
   amber: {
-    grad: "from-amber-500 to-orange-600",
-    bg: "bg-amber-500/10",
-    text: "text-amber-300",
-    border: "border-amber-400/30",
+    grad: "from-[#b4741a] to-[#8a5310]",
+    bg: "bg-[#f8eedb]",
+    text: "text-[#8a5310]",
+    border: "border-[#9a5d0f]/25",
   },
 };
 
@@ -168,30 +169,18 @@ export default function FeaturesHub() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="relative overflow-hidden glass-strong p-8 rounded-3xl">
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-pink-500/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl" />
-        </div>
-        <div className="relative">
-          <div className="flex items-center gap-2 mb-3">
-            <Sparkles className="w-5 h-5 text-pink-300" />
-            <span className="text-[11px] uppercase tracking-[0.3em] text-pink-300">Next-Gen Features</span>
-          </div>
-          <h1 className="text-4xl lg:text-5xl font-black mb-3">
-            9 AI-Powered <span className="text-gradient-pink">Innovations</span>
-          </h1>
-          <p className="text-slate-400 max-w-2xl text-lg">
-            Industry-first safety features powered by real machine learning models.
-            Every feature has working backend code — not just UI mockups.
-          </p>
-          <div className="flex flex-wrap gap-2 mt-5">
-            <Pill tone="pink"><Zap className="w-3 h-3" /> 9 FEATURES</Pill>
-            <Pill tone="cyan"><Brain className="w-3 h-3" /> 6 ML MODELS</Pill>
-            <Pill tone="amber"><Shield className="w-3 h-3" /> 23 ENDPOINTS</Pill>
-          </div>
-        </div>
-      </div>
+      <PageHeader
+        eyebrow="Next-gen features"
+        title={<>9 AI-powered <em>innovations</em></>}
+        description="Industry-first safety features powered by real machine learning models. Every feature has working backend code — not just UI mockups."
+        actions={
+          <>
+            <Pill tone="pink"><Zap className="w-3 h-3" /> 9 features</Pill>
+            <Pill tone="cyan"><Brain className="w-3 h-3" /> 6 ML models</Pill>
+            <Pill tone="amber"><Shield className="w-3 h-3" /> 23 endpoints</Pill>
+          </>
+        }
+      />
 
       {/* Features Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -206,7 +195,7 @@ export default function FeaturesHub() {
               transition={{ delay: i * 0.05 }}
             >
               <Link to={f.route} className="block group">
-                <div className={`glass p-6 rounded-2xl border ${c.border} h-full transition-all hover:scale-[1.02] hover:glow-${f.tone}`}>
+                <div className={`glass p-6 rounded-2xl border ${c.border} h-full transition-all hover:scale-[1.02] hover:shadow-[0_18px_40px_-24px_rgba(16,43,39,0.35)]`}>
                   <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${c.grad} grid place-items-center mb-4 group-hover:scale-110 transition-transform`}>
                     <Icon className="w-7 h-7 text-white" />
                   </div>
@@ -226,9 +215,9 @@ export default function FeaturesHub() {
       </div>
 
       {/* ML Stack Info */}
-      <div className="glass-strong p-6 rounded-3xl">
+      <div className="rn-card p-6">
         <div className="flex items-center gap-2 mb-4">
-          <Cpu className="w-5 h-5 text-cyan-300" />
+          <Cpu className="w-5 h-5 text-[var(--rn-primary)]" />
           <h2 className="text-xl font-bold">Machine Learning Stack</h2>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -240,10 +229,10 @@ export default function FeaturesHub() {
             { name: "MLPClassifier", use: "Gesture recognition neural net", lib: "scikit-learn" },
             { name: "Spectral Analysis", use: "Deepfake voice detection", lib: "numpy + FFT" },
           ].map((m) => (
-            <div key={m.name} className="glass p-3 rounded-xl">
-              <div className="text-sm font-bold text-white">{m.name}</div>
-              <div className="text-xs text-slate-400 mt-1">{m.use}</div>
-              <div className="text-[10px] text-cyan-300 mt-1 font-mono">{m.lib}</div>
+            <div key={m.name} className="rounded-xl border border-[var(--rn-border)] bg-[var(--rn-bg-soft)] p-3">
+              <div className="text-sm font-bold text-[var(--rn-ink)]">{m.name}</div>
+              <div className="text-xs text-[var(--rn-ink-soft)] mt-1">{m.use}</div>
+              <div className="text-[10px] text-[var(--rn-primary-strong)] mt-1 font-mono">{m.lib}</div>
             </div>
           ))}
         </div>
