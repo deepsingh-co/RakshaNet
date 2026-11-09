@@ -13,6 +13,8 @@ SMS/call fallback, GPS location tracking, and smartwatch integration. Essential 
 actions happen locally on the device; alerts go out through whatever communication channel is
 available.
 
+📄 **[One-page solution pitch](PITCH.md)** · **[PDF](PITCH.pdf)**
+
 ---
 
 ## Live now — Web PWA
